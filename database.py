@@ -27,7 +27,6 @@ else:
 
 def get_db_connection():
     """Returns a SQLite connection with Row factory for dict-like access."""
-    # Ensure database is initialized if new file created in /tmp
     if not os.path.exists(DB_PATH):
         init_db()
     conn = sqlite3.connect(DB_PATH)
@@ -37,7 +36,10 @@ def get_db_connection():
 
 def init_db():
     """Initializes the database tables and populates synthetic test data."""
-    conn = get_db_connection()
+    if os.path.dirname(DB_PATH):
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     # 1. Users Table (Authentication with secure password hashing)
