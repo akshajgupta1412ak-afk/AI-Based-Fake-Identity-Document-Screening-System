@@ -147,6 +147,18 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
 # ROUTES
 # ====================================================================
 
+@app.route('/debug-path')
+def debug_path():
+    return {
+        'request.path': request.path,
+        'request.url': request.url,
+        'request.base_url': request.base_url,
+        'environ.PATH_INFO': request.environ.get('PATH_INFO'),
+        'environ.SCRIPT_NAME': request.environ.get('SCRIPT_NAME'),
+        'headers': dict(request.headers)
+    }
+
+
 @app.route('/')
 def index():
     return redirect(url_for('dashboard'))
@@ -900,7 +912,12 @@ def run_quick_demo(test_name):
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return redirect(url_for('dashboard'))
+    return {
+        'error': '404 Not Found',
+        'request.path': request.path,
+        'request.url': request.url,
+        'headers': dict(request.headers)
+    }, 404
 
 
 @app.errorhandler(413)
