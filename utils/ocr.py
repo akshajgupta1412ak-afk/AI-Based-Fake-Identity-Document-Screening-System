@@ -13,9 +13,15 @@ Enhanced with Preprocessing & Confidence Assessment:
 
 import os
 import re
-import cv2
 import numpy as np
 from PIL import Image
+
+try:
+    import cv2
+    HAS_CV2 = True
+except Exception:
+    cv2 = None
+    HAS_CV2 = False
 
 # Try importing winocr
 try:
@@ -78,11 +84,14 @@ def extract_document_fields(image_path):
             # Attempt 2: Tesseract OCR fallback
             if not raw_text and HAS_PYTESSERACT:
                 try:
-                    # Convert to OpenCV for bilateral filtering
-                    cv_arr = np.array(processed_pil.convert('RGB'))
-                    gray = cv2.cvtColor(cv_arr, cv2.COLOR_RGB2GRAY)
-                    denoised = cv2.bilateralFilter(gray, 9, 75, 75)
-                    raw_text = pytesseract.image_to_string(denoised, config=r'--psm 3').strip()
+                    if HAS_CV2 and cv2 is not None:
+                        cv_arr = np.array(processed_pil.convert('RGB'))
+                        gray = cv2.cvtColor(cv_arr, cv2.COLOR_RGB2GRAY)
+                        denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+                        ocr_input = denoised
+                    else:
+                        ocr_input = processed_pil.convert('L')
+                    raw_text = pytesseract.image_to_string(ocr_input, config=r'--psm 3').strip()
                     if len(raw_text) < 20:
                         raw_text_sparse = pytesseract.image_to_string(denoised, config=r'--psm 11').strip()
                         if len(raw_text_sparse) > len(raw_text):
