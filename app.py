@@ -912,7 +912,13 @@ def run_quick_demo(test_name):
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return redirect(url_for('dashboard'))
+    return {
+        'error': '404 Not Found',
+        'request.path': request.path,
+        'request.query_string': request.query_string.decode('utf-8', errors='ignore'),
+        'environ_PATH_INFO': request.environ.get('PATH_INFO'),
+        'environ_QUERY_STRING': request.environ.get('QUERY_STRING')
+    }, 404
 
 
 @app.errorhandler(413)
