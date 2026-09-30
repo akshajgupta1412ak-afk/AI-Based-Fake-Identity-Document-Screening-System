@@ -1,0 +1,655 @@
+/* 
+   AI-Based Fake Identity & Document Screening System
+   Modern Light Document-Verification Interface
+   Palette: Off-White (#F6F8FA), Clean White (#FFFFFF), Dark Charcoal (#1F2937), Refined Teal (#0F766E)
+*/
+
+:root {
+    --bg-app: #F6F8FA;
+    --bg-card: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    --bg-subtle: #F9FAFB;
+    --bg-hover: #F3F4F6;
+    
+    --border-color: #E5E7EB;
+    --border-light: #F1F5F9;
+    
+    --text-primary: #1F2937;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    
+    /* Primary Accent: Professional Refined Teal */
+    --primary-teal: #0F766E;
+    --primary-teal-hover: #115E59;
+    --primary-teal-light: #F0FDFA;
+    --primary-teal-border: #99F6E4;
+    
+    /* Semantic Status Colors */
+    --status-success: #059669;
+    --status-success-bg: #ECFDF5;
+    --status-success-border: #A7F3D0;
+    --status-success-text: #065F46;
+    
+    --status-warning: #D97706;
+    --status-warning-bg: #FFFBEB;
+    --status-warning-border: #FDE68A;
+    --status-warning-text: #92400E;
+    
+    --status-danger: #DC2626;
+    --status-danger-bg: #FEF2F2;
+    --status-danger-border: #FECACA;
+    --status-danger-text: #991B1B;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ====================================================================
+   SIDEBAR NAVIGATION (Light & Professional)
+   ==================================================================== */
+.sidebar {
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    min-height: 100vh;
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.brand-icon {
+    font-size: 1.85rem;
+    color: var(--primary-teal);
+}
+
+.brand-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.brand-subtitle {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.nav-link-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 0.9rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.92rem;
+    margin-bottom: 0.35rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-link-custom:hover {
+    background-color: var(--bg-hover);
+    color: var(--primary-teal);
+}
+
+.nav-link-custom.active {
+    background-color: var(--primary-teal-light);
+    color: var(--primary-teal);
+    font-weight: 600;
+    border-left: 3px solid var(--primary-teal);
+}
+
+.nav-link-custom i {
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* System Status Dot */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--status-success-text);
+    background-color: var(--status-success-bg);
+    border: 1px solid var(--status-success-border);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--status-success);
+    border-radius: 50%;
+}
+
+/* ====================================================================
+   TOP HEADER
+   ==================================================================== */
+.top-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.1rem 2rem;
+}
+
+.page-main-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.15rem;
+}
+
+.page-sub-title {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+/* ====================================================================
+   CARDS & PANELS (Clean White & Subtle Shadows)
+   ==================================================================== */
+.sec-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.sec-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sec-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ====================================================================
+   COMPACT STATISTICS SECTION
+   ==================================================================== */
+.stat-box {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    display: block;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    height: 100%;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: #CBD5E1;
+}
+
+.stat-box-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.35rem;
+}
+
+.stat-box-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-box.stat-total .stat-box-value { color: var(--text-primary); }
+.stat-box.stat-total { border-top: 3px solid #64748B; }
+
+.stat-box.stat-genuine .stat-box-value { color: var(--status-success); }
+.stat-box.stat-genuine { border-top: 3px solid var(--status-success); }
+
+.stat-box.stat-review .stat-box-value { color: var(--status-warning); }
+.stat-box.stat-review { border-top: 3px solid var(--status-warning); }
+
+.stat-box.stat-risk .stat-box-value { color: var(--status-danger); }
+.stat-box.stat-risk { border-top: 3px solid var(--status-danger); }
+
+/* ====================================================================
+   STATUS BADGES (Soft, Professional, Unobtrusive)
+   ==================================================================== */
+.badge-status {
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.badge-low-risk, .badge-genuine {
+    background-color: var(--status-success-bg);
+    color: var(--status-success-text);
+    border: 1px solid var(--status-success-border);
+}
+
+.badge-med-risk, .badge-review {
+    background-color: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid var(--status-warning-border);
+}
+
+.badge-high-risk, .badge-suspicious {
+    background-color: var(--status-danger-bg);
+    color: var(--status-danger-text);
+    border: 1px solid var(--status-danger-border);
+}
+
+.badge-neutral {
+    background-color: #F3F4F6;
+    color: #4B5563;
+    border: 1px solid #E5E7EB;
+}
+
+/* ====================================================================
+   TABLES
+   ==================================================================== */
+.sec-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+}
+
+.sec-table th {
+    background-color: #F8FAFC;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.sec-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.sec-table tr:hover td {
+    background-color: #F8FAFC;
+}
+
+/* Monospace text for hash/codes */
+.code-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+    background-color: #F1F5F9;
+    color: #0F172A;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid #E2E8F0;
+}
+
+/* ====================================================================
+   BUTTONS (Clean Teal & Outlines)
+   ==================================================================== */
+.btn-teal {
+    background-color: var(--primary-teal);
+    color: #FFFFFF;
+    border: 1px solid var(--primary-teal);
+    padding: 0.6rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-teal:hover {
+    background-color: var(--primary-teal-hover);
+    color: #FFFFFF;
+    border-color: var(--primary-teal-hover);
+}
+
+.btn-teal-outline {
+    background-color: #FFFFFF;
+    color: var(--primary-teal);
+    border: 1px solid var(--primary-teal);
+    padding: 0.55rem 1.15rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.88rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-teal-outline:hover {
+    background-color: var(--primary-teal-light);
+    color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+.btn-subtle {
+    background-color: #F8FAFC;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-subtle:hover {
+    background-color: #F1F5F9;
+    color: var(--text-primary);
+}
+
+/* ====================================================================
+   FORM CONTROLS & DROPZONE
+   ==================================================================== */
+.sec-input {
+    background-color: #FFFFFF;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.92rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sec-input:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    outline: none;
+}
+
+.sec-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+/* Clean Upload Dropzone */
+.dropzone-clean {
+    border: 2px dashed #CBD5E1;
+    border-radius: 10px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background-color: #F8FAFC;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.dropzone-clean:hover, .dropzone-clean.dragover {
+    border-color: var(--primary-teal);
+    background-color: var(--primary-teal-light);
+}
+
+.dropzone-clean-icon {
+    font-size: 2.75rem;
+    color: var(--primary-teal);
+    margin-bottom: 0.75rem;
+}
+
+/* ====================================================================
+   STEPPED PIPELINE PROGRESS WIDGET
+   ==================================================================== */
+.pipeline-stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.pipeline-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.9rem;
+    border-radius: 6px;
+    background-color: #F8FAFC;
+    border: 1px solid var(--border-color);
+    font-size: 0.86rem;
+}
+
+.pipeline-step.step-complete {
+    background-color: var(--status-success-bg);
+    border-color: var(--status-success-border);
+    color: var(--status-success-text);
+}
+
+.pipeline-step.step-active {
+    background-color: var(--primary-teal-light);
+    border-color: var(--primary-teal-border);
+    color: var(--primary-teal);
+    font-weight: 600;
+}
+
+/* ====================================================================
+   RISK BREAKDOWN BARS
+   ==================================================================== */
+.risk-bar-container {
+    margin-bottom: 0.85rem;
+}
+
+.risk-bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.risk-bar-track {
+    height: 8px;
+    background-color: #E2E8F0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.risk-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* ====================================================================
+   DOCUMENT PREVIEW & IMAGE VIEWER
+   ==================================================================== */
+.doc-preview-wrapper {
+    background-color: #F8FAFC;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.doc-preview-img {
+    max-width: 100%;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid #CBD5E1;
+}
+
+/* ====================================================================
+   DISCLAIMER FOOTER
+   ==================================================================== */
+.clean-footer {
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: auto;
+}
+
+/* ====================================================================
+   RISK INDICATOR TRACK & MARKER (LOW RISK --- REVIEW --- HIGH RISK)
+   ==================================================================== */
+.risk-indicator-bar-wrapper {
+    width: 100%;
+    padding: 6px 0;
+}
+
+.risk-indicator-track {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #E2E8F0;
+    width: 100%;
+}
+
+.risk-segment.segment-low {
+    width: 25%;
+    background-color: #059669; /* Green */
+}
+
+.risk-segment.segment-med {
+    width: 30%;
+    background-color: #D97706; /* Amber */
+}
+
+.risk-segment.segment-high {
+    width: 45%;
+    background-color: #DC2626; /* Red */
+}
+
+.risk-indicator-marker {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    transition: left 0.3s ease;
+}
+
+.risk-indicator-pin {
+    width: 14px;
+    height: 24px;
+    border-radius: 4px;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* ====================================================================
+   VERTICAL AUDIT TRAIL
+   ==================================================================== */
+.audit-trail-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 0.5rem;
+}
+
+.audit-trail-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    position: relative;
+}
+
+.audit-trail-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: -8px;
+    width: 2px;
+    background-color: #E2E8F0;
+    z-index: 1;
+}
+
+.audit-trail-bullet {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--status-success-bg);
+    border: 2px solid var(--status-success-border);
+    color: var(--status-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.audit-trail-text {
+    font-size: 0.85rem;
+}

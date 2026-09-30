@@ -1,0 +1,7 @@
+# AI-Based Fake Identity & Document Screening System
+# Core dependencies for college project
+Flask>=3.0.0
+Werkzeug>=3.0.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+opencv-python-headless>=4.8.0

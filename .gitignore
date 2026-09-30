@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment & secrets
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Ephemeral uploads & temporary analysis artifacts
+static/uploads/*.jpg
+static/uploads/*.jpeg
+static/uploads/*.png
+static/uploads/*.pdf
+!sample_docs/
+temp_*.png
+temp_*.jpg
+
+# Local database (SQLite auto-initializes on startup)
+*.db-journal
+database.db
+
+# Vercel deployment cache
+.vercel/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

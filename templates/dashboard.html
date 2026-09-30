@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Document Security Center{% endblock %}
+{% block page_title %}Security Screening Dashboard{% endblock %}
+{% block page_subtitle %}Overview of identity document verifications, risk distribution, and screening logs.{% endblock %}
+
+{% block content %}
+<!-- 1. SECURITY OVERVIEW -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold text-dark text-uppercase small mb-0" style="letter-spacing: 0.6px;">
+            <i class="fa-solid fa-shield-halved text-teal me-1"></i> Security Overview
+        </h6>
+        <span class="small text-muted">Real-Time Registry Metrics</span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-3 col-sm-6">
+            <a href="{{ url_for('history') }}" class="stat-box stat-total text-decoration-none">
+                <div class="stat-box-value">{{ stats.total_screened }}</div>
+                <div class="stat-box-label">Total Documents Screened</div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <a href="{{ url_for('history', filter_risk='GENUINE') }}" class="stat-box stat-genuine text-decoration-none">
+                <div class="stat-box-value text-success">{{ stats.genuine }}</div>
+                <div class="stat-box-label">Likely Genuine</div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <a href="{{ url_for('history', filter_risk='VERIFICATION') }}" class="stat-box stat-review text-decoration-none">
+                <div class="stat-box-value text-warning">{{ stats.requires_review }}</div>
+                <div class="stat-box-label">Requires Verification</div>
+            </a>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <a href="{{ url_for('history', filter_risk='SUSPICIOUS') }}" class="stat-box stat-risk text-decoration-none">
+                <div class="stat-box-value text-danger">{{ stats.suspicious }}</div>
+                <div class="stat-box-label">Suspicious</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 2. RISK OVERVIEW & SCREENING ACTION -->
+<div class="row g-4 mb-4">
+    <!-- Risk Overview -->
+    <div class="col-lg-5">
+        <div class="sec-card h-100 mb-0">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-chart-pie text-teal"></i>
+                    Risk Overview
+                </div>
+                <span class="small text-muted">Risk Distribution</span>
+            </div>
+
+            <div class="mb-4">
+                <div class="small text-secondary mb-2">Screening Outcome Ratio</div>
+                <!-- 3-color progress distribution -->
+                <div class="progress rounded-pill mb-3" style="height: 12px; background-color: #E2E8F0;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ risk_dist.genuine_pct }}%;" title="Low Risk: {{ risk_dist.genuine_pct }}%"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ risk_dist.review_pct }}%;" title="Medium Risk: {{ risk_dist.review_pct }}%"></div>
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ risk_dist.suspicious_pct }}%;" title="High Risk: {{ risk_dist.suspicious_pct }}%"></div>
+                </div>
+
+                <div class="d-flex justify-content-between small text-secondary">
+                    <span><i class="fa-solid fa-circle text-success" style="font-size: 0.6rem;"></i> Low Risk ({{ risk_dist.genuine_pct }}%)</span>
+                    <span><i class="fa-solid fa-circle text-warning" style="font-size: 0.6rem;"></i> Medium Risk ({{ risk_dist.review_pct }}%)</span>
+                    <span><i class="fa-solid fa-circle text-danger" style="font-size: 0.6rem;"></i> High Risk ({{ risk_dist.suspicious_pct }}%)</span>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column gap-2 pt-2 border-top">
+                <div class="d-flex justify-content-between align-items-center p-2 rounded bg-subtle border">
+                    <span class="small fw-semibold text-dark"><i class="fa-solid fa-circle-check text-success me-2"></i> Low Risk (0–25)</span>
+                    <span class="badge-status badge-genuine">{{ stats.genuine }} Documents</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 rounded bg-subtle border">
+                    <span class="small fw-semibold text-dark"><i class="fa-solid fa-circle-exclamation text-warning me-2"></i> Medium Risk (26–55)</span>
+                    <span class="badge-status badge-review">{{ stats.requires_review }} Documents</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 rounded bg-subtle border">
+                    <span class="small fw-semibold text-dark"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> High Risk (56–100)</span>
+                    <span class="badge-status badge-suspicious">{{ stats.suspicious }} Documents</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Screening & Controlled Viva Demos -->
+    <div class="col-lg-7">
+        <div class="sec-card h-100 mb-0 d-flex flex-column justify-content-between">
+            <div>
+                <div class="sec-card-header">
+                    <div class="sec-card-title">
+                        <i class="fa-solid fa-file-shield text-teal"></i>
+                        Start Screening
+                    </div>
+                    <a href="{{ url_for('upload') }}" class="btn-teal py-1 px-3 small">
+                        <i class="fa-solid fa-plus"></i> New Screening
+                    </a>
+                </div>
+
+                <p class="text-secondary small mb-3">
+                    Upload an identity document scan (JPG, JPEG, PNG) to initiate automated optical extraction, image quality analysis, tamper detection, and multi-factor risk assessment.
+                </p>
+
+                <!-- Viva Demonstration Documents -->
+                <div class="p-3 rounded bg-subtle border mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-dark text-uppercase">Demonstration Mode (Synthetic Test Docs)</span>
+                        <span class="badge-status badge-neutral" style="font-size: 0.68rem;">Viva Ready</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('run_quick_demo', test_name='clean') }}" class="btn-subtle py-1 px-2 small text-success" title="Clean Sample -> Likely Genuine">
+                            <i class="fa-solid fa-circle-check me-1"></i> Clean Sample (Genuine)
+                        </a>
+                        <a href="{{ url_for('run_quick_demo', test_name='altered') }}" class="btn-subtle py-1 px-2 small text-danger" title="Altered Document -> Suspicious">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Altered Doc (Suspicious)
+                        </a>
+                        <a href="{{ url_for('run_quick_demo', test_name='ai_synthetic') }}" class="btn-subtle py-1 px-2 small text-danger" title="AI-Generated Sample -> Suspicious">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI-Generated (Suspicious)
+                        </a>
+                        <a href="{{ url_for('run_quick_demo', test_name='incomplete') }}" class="btn-subtle py-1 px-2 small text-warning" title="Incomplete Sample -> Requires Verification">
+                            <i class="fa-solid fa-circle-question me-1"></i> Incomplete Sample
+                        </a>
+                        <a href="{{ url_for('run_quick_demo', test_name='expired') }}" class="btn-subtle py-1 px-2 small text-warning" title="Expired Document -> Requires Verification">
+                            <i class="fa-solid fa-calendar-xmark me-1"></i> Expired Document
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top text-secondary small">
+                <span>Supported Formats: JPG, JPEG, PNG</span>
+                <a href="{{ url_for('upload') }}" class="text-teal text-decoration-none fw-semibold">
+                    Go to Upload Page <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. RECENT SCREENINGS TABLE -->
+<div class="sec-card mb-0">
+    <div class="sec-card-header">
+        <div class="sec-card-title">
+            <i class="fa-solid fa-clock-rotate-left text-teal"></i>
+            Recent Screenings
+        </div>
+        <a href="{{ url_for('history') }}" class="btn-subtle py-1 px-3 small">
+            View All History
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="sec-table">
+            <thead>
+                <tr>
+                    <th>Screening ID</th>
+                    <th>Document Type</th>
+                    <th>Risk Score</th>
+                    <th>Result</th>
+                    <th>Date/Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in recent_records %}
+                <tr>
+                    <td class="code-mono">#{{ record.verification_code }}</td>
+                    <td>
+                        <span class="badge-status badge-neutral">{{ record.document_type }}</span>
+                    </td>
+                    <td>
+                        {% if record.risk_score <= 25 %}
+                            <span class="text-success fw-bold">{{ record.risk_score }} / 100</span>
+                        {% elif record.risk_score <= 55 %}
+                            <span class="text-warning fw-bold">{{ record.risk_score }} / 100</span>
+                        {% else %}
+                            <span class="text-danger fw-bold">{{ record.risk_score }} / 100</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if 'GENUINE' in record.result %}
+                            <span class="badge-status badge-genuine">Likely Genuine</span>
+                        {% elif 'VERIFICATION' in record.result %}
+                            <span class="badge-status badge-review">Requires Verification</span>
+                        {% else %}
+                            <span class="badge-status badge-suspicious">Suspicious</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary small">{{ record.created_at[:16] }}</td>
+                    <td>
+                        <a href="{{ url_for('result', code=record.verification_code) }}" class="btn-subtle py-1 px-2 small">
+                            View Report
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block text-secondary"></i>
+                        No screening records recorded yet. Start a new screening to populate this table.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

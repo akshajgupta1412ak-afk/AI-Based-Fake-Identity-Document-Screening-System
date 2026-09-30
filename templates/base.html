@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DocSec AI - Document Security & Verification{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Light Modern Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0 min-vh-100">
+            <!-- Left Sidebar Navigation -->
+            <div class="col-lg-2 col-md-3 sidebar">
+                <div class="brand-header">
+                    <i class="fa-solid fa-shield-halved brand-icon"></i>
+                    <div>
+                        <div class="brand-title">DocSec AI</div>
+                        <div class="brand-subtitle">Document Security & Verification</div>
+                    </div>
+                </div>
+
+                <div class="nav flex-column mb-auto">
+                    <a href="{{ url_for('dashboard') }}" class="nav-link-custom {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-table-columns"></i>
+                        <span>Overview</span>
+                    </a>
+                    <a href="{{ url_for('upload') }}" class="nav-link-custom {% if request.endpoint == 'upload' %}active{% endif %}">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                        <span>New Screening</span>
+                    </a>
+                    <a href="{{ url_for('history') }}" class="nav-link-custom {% if request.endpoint == 'history' or request.endpoint == 'details' %}active{% endif %}">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Screening History</span>
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="nav-link-custom {% if request.endpoint == 'reports' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-simple"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="{{ url_for('compare') }}" class="nav-link-custom {% if request.endpoint == 'compare' %}active{% endif %}">
+                        <i class="fa-solid fa-code-compare"></i>
+                        <span>Compare</span>
+                    </a>
+                    <a href="{{ url_for('help_page') }}" class="nav-link-custom {% if request.endpoint in ['help_page', 'about'] %}active{% endif %}">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span>Help</span>
+                    </a>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="status-pill mb-3 w-100 justify-content-center">
+                        <span class="status-dot"></span>
+                        <span>System Operational</span>
+                    </div>
+                    {% if session.get('user_id') %}
+                        <div class="d-flex align-items-center justify-content-between text-secondary small px-1">
+                            <span class="text-truncate" title="{{ session.get('username') }}">
+                                <i class="fa-solid fa-user-check me-1 text-teal"></i> {{ session.get('username', 'Analyst') }}
+                            </span>
+                            <a href="{{ url_for('logout') }}" class="text-danger text-decoration-none small fw-semibold" title="Logout">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Logout
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn-subtle w-100 justify-content-center text-decoration-none">
+                            <i class="fa-solid fa-lock me-1"></i> Analyst Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-10 col-md-9 d-flex flex-column min-vh-100">
+                <!-- Top Header Bar -->
+                <header class="top-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h4 class="page-main-title">{% block page_title %}Document Security Center{% endblock %}</h4>
+                        <div class="page-sub-title">{% block page_subtitle %}AI-Assisted Identity & Document Screening{% endblock %}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge-status badge-neutral">
+                            <i class="fa-solid fa-shield-check text-success"></i> Document Integrity: Active
+                        </span>
+                        <a href="{{ url_for('upload') }}" class="btn-teal">
+                            <i class="fa-solid fa-plus"></i> New Document Scan
+                        </a>
+                    </div>
+                </header>
+
+                <!-- Flash Messages Container -->
+                <div class="px-4 pt-3">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-sm border" role="alert">
+                                    <i class="fa-solid fa-circle-info me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Page Content -->
+                <main class="px-4 py-3 flex-grow-1">
+                    {% block content %}{% endblock %}
+                </main>
+
+                <!-- Academic Preliminary Screening Disclaimer Footer -->
+                <footer class="clean-footer">
+                    <div>
+                        <strong>Preliminary Screening Notice:</strong> This system provides AI-assisted preliminary document screening and does not guarantee document authenticity. Final verification should be performed through an authorized manual or official authority process.
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Application JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

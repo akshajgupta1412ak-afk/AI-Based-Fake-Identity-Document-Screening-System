@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Screening History - Document Security Center{% endblock %}
+{% block page_title %}Screening History{% endblock %}
+{% block page_subtitle %}Audit logs of all screened identity documents and verification assessments.{% endblock %}
+
+{% block content %}
+<div class="sec-card">
+    <div class="sec-card-header">
+        <div class="sec-card-title">
+            <i class="fa-solid fa-clock-rotate-left text-teal"></i>
+            Screening History Log
+        </div>
+        <span class="badge-status badge-neutral" id="record-count">{{ records|length }} Total Records</span>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-secondary">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" class="form-control sec-input border-start-0 ps-0" id="search-input" placeholder="Search by Screening ID or Document Type..." onkeyup="filterTable()">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select sec-input" id="filter-type" onchange="filterTable()">
+                <option value="ALL">All Document Types</option>
+                <option value="ID Card">Identity Card</option>
+                <option value="Passport">Passport</option>
+                <option value="Driving Licence">Driving Licence</option>
+                <option value="Certificate">Certificate</option>
+                <option value="College ID">College / Student ID</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select sec-input" id="filter-risk" onchange="filterTable()">
+                <option value="ALL">All Results</option>
+                <option value="GENUINE">Likely Genuine (0–25)</option>
+                <option value="VERIFICATION">Requires Verification (26–55)</option>
+                <option value="SUSPICIOUS">Suspicious (56–100)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Screenings Table: Exactly Screening ID, Document Type, Risk Score, Result, Date, View Report -->
+    <div class="table-responsive">
+        <table class="sec-table" id="history-table">
+            <thead>
+                <tr>
+                    <th>Screening ID</th>
+                    <th>Document Type</th>
+                    <th>Risk Score</th>
+                    <th>Result</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">View Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr class="history-row" 
+                    style="cursor: pointer;"
+                    onclick="window.location.href='{{ url_for('result', code=record.verification_code) }}';"
+                    data-id="{{ record.verification_code }}" 
+                    data-type="{{ record.document_type }}" 
+                    data-result="{{ record.result }}">
+                    <td class="code-mono fw-bold">#{{ record.verification_code }}</td>
+                    <td>
+                        <span class="badge-status badge-neutral">{{ record.document_type }}</span>
+                    </td>
+                    <td>
+                        {% if record.risk_score <= 25 %}
+                            <span class="text-success fw-bold">{{ record.risk_score }} / 100</span>
+                        {% elif record.risk_score <= 55 %}
+                            <span class="text-warning fw-bold">{{ record.risk_score }} / 100</span>
+                        {% else %}
+                            <span class="text-danger fw-bold">{{ record.risk_score }} / 100</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if 'GENUINE' in record.result %}
+                            <span class="badge-status badge-genuine">Likely Genuine</span>
+                        {% elif 'VERIFICATION' in record.result %}
+                            <span class="badge-status badge-review">Requires Verification</span>
+                        {% else %}
+                            <span class="badge-status badge-suspicious">Suspicious</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary small">{{ record.created_at[:16] }}</td>
+                    <td class="text-end" onclick="event.stopPropagation();">
+                        <div class="d-inline-flex gap-1">
+                            <a href="{{ url_for('result', code=record.verification_code) }}" class="btn-subtle py-1 px-3 small" title="View Assessment Dossier">
+                                View Report
+                            </a>
+                            <a href="{{ url_for('report', code=record.verification_code) }}" target="_blank" class="btn-subtle py-1 px-2 small text-teal" title="Print/Export PDF">
+                                <i class="fa-solid fa-print"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr id="empty-row">
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block text-secondary"></i>
+                        No document screenings recorded yet. Upload a document to create an audit record.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterTable() {
+    const searchVal = document.getElementById('search-input').value.toLowerCase();
+    const typeVal = document.getElementById('filter-type').value;
+    const riskVal = document.getElementById('filter-risk').value;
+    const rows = document.querySelectorAll('.history-row');
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const id = (row.getAttribute('data-id') || '').toLowerCase();
+        const type = row.getAttribute('data-type') || '';
+        const result = (row.getAttribute('data-result') || '').toUpperCase();
+
+        const matchesSearch = !searchVal || id.includes(searchVal) || type.toLowerCase().includes(searchVal);
+        const matchesType = (typeVal === 'ALL') || (type === typeVal);
+        const matchesRisk = (riskVal === 'ALL') || result.includes(riskVal);
+
+        if (matchesSearch && matchesType && matchesRisk) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const countBadge = document.getElementById('record-count');
+    if (countBadge) countBadge.textContent = `${visibleCount} Records Shown`;
+}
+</script>
+{% endblock %}

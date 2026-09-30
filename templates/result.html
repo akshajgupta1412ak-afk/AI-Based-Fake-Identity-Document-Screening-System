@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}Screening Result - {{ record.verification_code }}{% endblock %}
+{% block page_title %}Document Screening Assessment{% endblock %}
+{% block page_subtitle %}Automated Security Verification &amp; Explainable Risk Dossier{% endblock %}
+
+{% block content %}
+<!-- Top Quick Action Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('dashboard') }}" class="btn-subtle py-1 px-3">
+            <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+        </a>
+        <div class="small text-secondary">
+            Screening ID: <strong class="text-dark code-mono">{{ record.verification_code }}</strong>
+        </div>
+        <div class="small text-muted d-none d-md-block">
+            <i class="fa-regular fa-calendar me-1"></i> {{ record.created_at[:16] }}
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+        <a href="{{ url_for('report', code=record.verification_code) }}" target="_blank" class="btn-teal">
+            <i class="fa-solid fa-file-arrow-down"></i> Download Screening Report
+        </a>
+        <a href="{{ url_for('compare', base=record.verification_code) }}" class="btn-subtle">
+            <i class="fa-solid fa-code-compare"></i> Compare
+        </a>
+        <a href="{{ url_for('upload') }}" class="btn-subtle">
+            <i class="fa-solid fa-plus"></i> New Screening
+        </a>
+    </div>
+</div>
+
+<!-- Two-Column Layout -->
+<div class="row g-4">
+    <!-- =============================================================
+         LEFT COLUMN: Document Preview, Integrity, Audit Trail
+         ============================================================= -->
+    <div class="col-lg-5">
+        <!-- 1. Document Preview Card -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-image text-teal"></i>
+                    Document Preview
+                </div>
+                <span class="badge-status badge-neutral">{{ record.document_type }}</span>
+            </div>
+
+            <div class="doc-preview-wrapper mb-3">
+                {% if record.filename and not record.filename.lower().endswith('.pdf') %}
+                    <img src="{{ url_for('uploaded_file', filename=record.filename) }}" 
+                         alt="Document Scan Preview" 
+                         class="doc-preview-img"
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x400/f8fafc/64748b?text=Document+Preview';">
+                {% else %}
+                    <div class="py-5 text-center text-secondary">
+                        <i class="fa-solid fa-file-pdf fa-4x text-danger mb-2"></i>
+                        <div class="fw-semibold">PDF Document Ingested</div>
+                        <div class="small text-muted">{{ record.filename }}</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between text-secondary small px-1 border-top pt-2">
+                <span>File: <strong class="text-dark">{{ record.filename[:22] }}...</strong></span>
+                <span>Type: <strong class="text-dark">{{ record.document_type }}</strong></span>
+            </div>
+        </div>
+
+        <!-- 2. Document Integrity Card -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-fingerprint text-teal"></i>
+                    Cryptographic Document Integrity
+                </div>
+                <span class="small text-muted">SHA-256</span>
+            </div>
+
+            <div class="p-3 rounded mb-3 {% if fingerprint.status == 'DOCUMENT_CHANGED' %}bg-danger-subtle border border-danger-subtle{% elif fingerprint.status == 'IDENTICAL_REUPLOAD' %}bg-info-subtle border border-info-subtle{% else %}bg-subtle border{% endif %}">
+                <div class="d-flex align-items-center gap-2">
+                    {% if fingerprint.status == 'DOCUMENT_CHANGED' %}
+                        <i class="fa-solid fa-triangle-exclamation text-danger fa-lg"></i>
+                        <div>
+                            <strong class="text-danger small d-block">Document Has Changed</strong>
+                            <div class="small text-secondary">Hash mismatch: file bytes differ from previous verification of this document ID.</div>
+                        </div>
+                    {% elif fingerprint.status == 'IDENTICAL_REUPLOAD' %}
+                        <i class="fa-solid fa-circle-info text-primary fa-lg"></i>
+                        <div>
+                            <strong class="text-primary small d-block">Identical Re-upload</strong>
+                            <div class="small text-secondary">Identical file previously screened in security registry.</div>
+                        </div>
+                    {% else %}
+                        <i class="fa-solid fa-circle-check text-success fa-lg"></i>
+                        <div>
+                            <strong class="text-success small d-block">Original Document Registered</strong>
+                            <div class="small text-secondary">Cryptographic fingerprint successfully recorded into audit log.</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="small text-muted mb-1">SHA-256 Hash Digest:</div>
+            <div class="d-flex align-items-center gap-1">
+                <span class="code-mono text-truncate d-inline-block" style="max-width: 320px;" title="{{ fingerprint.fingerprint }}">
+                    {{ fingerprint.fingerprint }}
+                </span>
+                <button class="btn-subtle py-1 px-2 small" onclick="copyToClipboard('{{ fingerprint.fingerprint }}')" title="Copy Hash">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Simple Audit Trail -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-timeline text-teal"></i>
+                    Screening Audit Trail
+                </div>
+                <span class="badge-status badge-genuine">Verified</span>
+            </div>
+
+            <div class="audit-trail-vertical">
+                {% for item in audit_trail %}
+                <div class="audit-trail-step">
+                    <div class="audit-trail-bullet">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div class="audit-trail-text">
+                        <span class="fw-semibold text-dark">{{ item.name }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         RIGHT COLUMN: Screening Result, 7 Checks, Why This Result,
+                       Field Info, Risk Breakdown
+         ============================================================= -->
+    <div class="col-lg-7">
+        <!-- 1. SCREENING RESULT & RISK INDICATOR -->
+        <div class="sec-card mb-4 p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                    <div class="text-secondary small fw-semibold text-uppercase mb-1">
+                        Preliminary Screening Verdict
+                    </div>
+                    {% if risk.score <= 25 %}
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge-status badge-genuine fs-5 px-3 py-2">
+                                <i class="fa-solid fa-circle-check"></i> LIKELY GENUINE
+                            </span>
+                            <span class="small text-muted d-none d-sm-inline">(Likely Genuine)</span>
+                        </div>
+                    {% elif risk.score <= 55 %}
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge-status badge-review fs-5 px-3 py-2">
+                                <i class="fa-solid fa-circle-exclamation"></i> REQUIRES FURTHER VERIFICATION
+                            </span>
+                            <span class="small text-muted d-none d-sm-inline">(Requires Further Verification)</span>
+                        </div>
+                    {% else %}
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge-status badge-suspicious fs-5 px-3 py-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i> SUSPICIOUS
+                            </span>
+                            <span class="small text-muted d-none d-sm-inline">(Suspicious)</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="text-end">
+                    <div class="text-secondary small fw-semibold text-uppercase mb-1">Risk Score</div>
+                    <div class="display-6 fw-bold" style="color: {{ risk.color_code }};">
+                        {{ risk.score }} <span class="fs-6 text-muted fw-normal">/ 100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple Risk Indicator (LOW RISK -------- REVIEW -------- HIGH RISK) -->
+            <div class="mt-4 pt-2 border-top">
+                <div class="d-flex justify-content-between small text-secondary fw-semibold mb-2">
+                    <span class="{% if risk.score <= 25 %}text-success fw-bold{% endif %}">LOW RISK (0–25)</span>
+                    <span class="{% if 26 <= risk.score <= 55 %}text-warning fw-bold{% endif %}">REVIEW (26–55)</span>
+                    <span class="{% if risk.score >= 56 %}text-danger fw-bold{% endif %}">HIGH RISK (56–100)</span>
+                </div>
+
+                <!-- 3-Segment Risk Track -->
+                <div class="risk-indicator-bar-wrapper mb-2 position-relative">
+                    <div class="risk-indicator-track">
+                        <div class="risk-segment segment-low" title="Low Risk Range (0–25)"></div>
+                        <div class="risk-segment segment-med" title="Review Range (26–55)"></div>
+                        <div class="risk-segment segment-high" title="High Risk Range (56–100)"></div>
+                    </div>
+                    <!-- Indicator Pointer -->
+                    <div class="risk-indicator-marker" style="left: {{ risk.score }}%;" title="Current Score: {{ risk.score }}/100">
+                        <div class="risk-indicator-pin" style="background-color: {{ risk.color_code }};"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                    <span>0</span>
+                    <span>25</span>
+                    <span>55</span>
+                    <span>100</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. "WHY THIS RESULT?" SECTION -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-circle-question text-teal"></i>
+                    Why Was This Document Classified This Way?
+                </div>
+                <span class="badge-status badge-neutral">Explainable Assessment</span>
+            </div>
+
+            <div class="p-3 rounded bg-subtle border mb-3">
+                <div class="fw-medium text-dark mb-2" style="font-size: 0.95rem; line-height: 1.45;">
+                    {{ why_this_result }}
+                </div>
+                <div class="small text-secondary">
+                    Classification is synthesized across multiple independent indicators without relying on a single checkpoint.
+                </div>
+            </div>
+
+            {% if risk.attention_indicators %}
+            <div class="mb-3">
+                <div class="small fw-semibold text-dark mb-2">
+                    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Attention &amp; Inconsistency Factors:
+                </div>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    {% for item in risk.attention_indicators %}
+                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle border">
+                        <i class="fa-solid fa-circle-dot text-warning mt-1"></i>
+                        <span class="text-secondary">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if risk.positive_indicators %}
+            <div class="mb-3">
+                <div class="small fw-semibold text-dark mb-2">
+                    <i class="fa-solid fa-circle-check text-success me-1"></i> Verified Positive Observations:
+                </div>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    {% for item in risk.positive_indicators %}
+                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle border">
+                        <i class="fa-solid fa-check text-success mt-1"></i>
+                        <span class="text-secondary">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="small text-muted p-2 rounded bg-light border" style="font-size: 0.78rem;">
+                <i class="fa-solid fa-circle-info text-teal me-1"></i>
+                <strong>Notice:</strong> This automated preliminary screening does not claim legal or definitive proof of document authenticity or fraud.
+            </div>
+        </div>
+
+        <!-- 3. SECURITY CHECKS (7 Checks) -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-shield-halved text-teal"></i>
+                    Security Checks
+                </div>
+                <span class="small text-muted">7 Independent Checkpoints</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sec-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 32%;">Security Check</th>
+                            <th style="width: 20%;">Result</th>
+                            <th style="width: 48%;">Findings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chk in security_checks %}
+                        <tr>
+                            <td class="fw-semibold text-dark small">
+                                <i class="{{ chk.icon }} text-teal me-1"></i>
+                                {{ chk.name }}
+                            </td>
+                            <td>
+                                {% if chk.status == 'PASSED' %}
+                                    <span class="badge-status badge-genuine py-1 px-2 small">
+                                        <i class="fa-solid fa-check"></i> Passed
+                                    </span>
+                                {% elif chk.status == 'WARNING' %}
+                                    <span class="badge-status badge-review py-1 px-2 small">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Warning
+                                    </span>
+                                {% elif chk.status == 'NOT VERIFIED' %}
+                                    <span class="badge-status badge-review py-1 px-2 small">
+                                        <i class="fa-solid fa-circle-info"></i> Not Verified
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status badge-suspicious py-1 px-2 small">
+                                        <i class="fa-solid fa-xmark"></i> Flagged
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary" style="font-size: 0.82rem;">
+                                {{ chk.details }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. EXTRACTED DOCUMENT INFORMATION -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-address-card text-teal"></i>
+                    Extracted Document Information
+                </div>
+                <span class="small text-muted">Field-Level Extraction</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sec-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Field Name</th>
+                            <th style="width: 45%;">Extracted Value</th>
+                            <th style="width: 25%;">Validation Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in extracted_fields %}
+                        <tr>
+                            <td class="fw-medium text-secondary small">{{ f.field }}</td>
+                            <td class="fw-semibold text-dark">
+                                {% if f.field == 'Document Number' and f.value != 'Not detected' %}
+                                    <span class="code-mono">{{ f.value }}</span>
+                                {% else %}
+                                    {{ f.value }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if f.is_valid %}
+                                    <span class="badge-status badge-genuine py-1 px-2 small">
+                                        <i class="fa-solid fa-check"></i> {{ f.status }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status badge-review py-1 px-2 small">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ f.status }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. RISK BREAKDOWN -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-chart-pie text-teal"></i>
+                    Risk Breakdown
+                </div>
+                <span class="small fw-semibold text-dark">Total: {{ risk.score }} / 100</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sec-table">
+                    <thead>
+                        <tr>
+                            <th>Evaluation Dimension</th>
+                            <th style="text-align: right; width: 140px;">Risk Contribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in contributing_factors %}
+                        <tr>
+                            <td class="small text-secondary">{{ item.name }}</td>
+                            <td class="text-end fw-semibold {% if item.penalty > 0 %}text-warning-emphasis{% else %}text-muted{% endif %}">
+                                {% if item.penalty > 0 %}+{{ item.penalty }}{% else %}+0{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-light">
+                            <td class="fw-bold text-dark text-uppercase small">Total Risk Score</td>
+                            <td class="text-end fw-bold fs-6" style="color: {{ risk.color_code }};">
+                                {{ risk.score }} / 100
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. OPTIONAL TECHNICAL DIAGNOSTICS ACCORDION -->
+        <div class="sec-card mb-0">
+            <div class="accordion accordion-flush" id="techAccordion">
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed px-0 py-1 bg-transparent text-secondary small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTechData">
+                            <i class="fa-solid fa-sliders text-teal me-2"></i> Technical Diagnostics &amp; Raw OCR Stream
+                        </button>
+                    </h2>
+                    <div id="collapseTechData" class="accordion-collapse collapse">
+                        <div class="accordion-body px-0 pb-0 pt-3">
+                            <div class="row g-2 small mb-3">
+                                <div class="col-sm-6">
+                                    <div class="p-2 rounded bg-subtle border">
+                                        <div class="text-muted" style="font-size: 0.72rem;">BLUR VARIANCE (LAPLACIAN)</div>
+                                        <strong class="code-mono">{{ image_analysis.blur_score or 0.0 }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="p-2 rounded bg-subtle border">
+                                        <div class="text-muted" style="font-size: 0.72rem;">ELA DISPARITY PEAK</div>
+                                        <strong class="code-mono">{{ image_analysis.ela_diff_peak or 0.0 }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="small text-muted mb-1">Optical Text Stream:</div>
+                            <pre class="p-2 rounded bg-subtle border text-secondary" style="white-space: pre-wrap; font-size: 0.75rem; max-height: 120px; overflow-y: auto;">{{ ocr.raw_text or 'No raw text stream captured.' }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

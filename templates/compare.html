@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Documents - Document Security Center{% endblock %}
+{% block page_title %}Document Comparison{% endblock %}
+{% block page_subtitle %}Side-by-side attribute and visual comparison of two identity document records.{% endblock %}
+
+{% block content %}
+<!-- Selection Form Card -->
+<div class="sec-card mb-4">
+    <div class="sec-card-header">
+        <div class="sec-card-title">
+            <i class="fa-solid fa-code-compare text-teal"></i>
+            Compare Documents
+        </div>
+        <span class="small text-muted">Dual-Record Forensic Inspection</span>
+    </div>
+
+    <form action="{{ url_for('compare') }}" method="GET" class="row g-3 align-items-end mb-3">
+        <div class="col-md-5">
+            <label for="doc1" class="sec-label">Document 1 (Baseline)</label>
+            <select class="form-select sec-input" id="doc1" name="doc1" required>
+                <option value="" disabled {% if not doc1_code %}selected{% endif %}>-- Select Baseline Document --</option>
+                {% for rec in all_records %}
+                <option value="{{ rec.verification_code }}" {% if doc1_code == rec.verification_code %}selected{% endif %}>
+                    #{{ rec.verification_code }} - {{ rec.document_type }} ({{ rec.extracted_name or rec.document_number or 'Scan' }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-5">
+            <label for="doc2" class="sec-label">Document 2 (Comparison Version)</label>
+            <select class="form-select sec-input" id="doc2" name="doc2" required>
+                <option value="" disabled {% if not doc2_code %}selected{% endif %}>-- Select Comparison Document --</option>
+                {% for rec in all_records %}
+                <option value="{{ rec.verification_code }}" {% if doc2_code == rec.verification_code %}selected{% endif %}>
+                    #{{ rec.verification_code }} - {{ rec.document_type }} ({{ rec.extracted_name or rec.document_number or 'Scan' }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="submit" class="btn-teal w-100 justify-content-center">
+                <i class="fa-solid fa-arrows-split-up-and-left"></i> Compare
+            </button>
+        </div>
+    </form>
+
+    <!-- Quick Pre-Filled Demo Comparators -->
+    {% if all_records|length >= 2 %}
+    <div class="pt-2 border-top">
+        <span class="small text-muted me-2">Quick Comparison:</span>
+        <a href="{{ url_for('compare', doc1=all_records[0].verification_code, doc2=all_records[1].verification_code) }}" class="btn-subtle py-1 px-2 small">
+            Compare 2 Most Recent Documents
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if doc1 and doc2 %}
+<!-- Comparison Summary Card -->
+<div class="sec-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <h6 class="fw-bold text-dark mb-1">Side-by-Side Comparison Outcome</h6>
+            <div class="small text-secondary">
+                Comparing <span class="code-mono">#{{ doc1.verification_code }}</span> with <span class="code-mono">#{{ doc2.verification_code }}</span>
+            </div>
+        </div>
+        <div>
+            {% if diff_count == 0 %}
+                <span class="badge-status badge-genuine fs-6 px-3 py-1">
+                    <i class="fa-solid fa-circle-check"></i> Documents Fully Consistent (0 Differences)
+                </span>
+            {% else %}
+                <span class="badge-status badge-review fs-6 px-3 py-1">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ diff_count }} Difference{{ 's' if diff_count > 1 else '' }} Detected
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Matrix Table -->
+<div class="sec-card mb-4">
+    <div class="sec-card-header">
+        <div class="sec-card-title">
+            <i class="fa-solid fa-table-list text-teal"></i>
+            Attribute Comparison Matrix
+        </div>
+        <span class="small text-muted">{{ comparisons|length }} Attributes Checked</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="sec-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Attribute</th>
+                    <th style="width: 32%;">Document 1</th>
+                    <th style="width: 32%;">Document 2</th>
+                    <th style="width: 11%; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in comparisons %}
+                <tr class="{% if not item.match %}bg-warning-subtle{% endif %}">
+                    <td class="fw-semibold text-dark small">{{ item.attribute }}</td>
+                    <td class="text-secondary small">
+                        {% if item.is_code %}
+                            <span class="code-mono text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.val1 }}">{{ item.val1 }}</span>
+                        {% else %}
+                            {{ item.val1 or 'Not detected' }}
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary small">
+                        {% if item.is_code %}
+                            <span class="code-mono text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.val2 }}">{{ item.val2 }}</span>
+                        {% else %}
+                            {{ item.val2 or 'Not detected' }}
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.match %}
+                            <span class="badge-status badge-genuine py-1 px-2 small">
+                                <i class="fa-solid fa-check"></i> Same
+                            </span>
+                        {% else %}
+                            <span class="badge-status badge-suspicious py-1 px-2 small">
+                                <i class="fa-solid fa-xmark"></i> Different
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Side-by-Side Visual Previews -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="sec-card mb-0">
+            <div class="sec-card-header">
+                <div class="sec-card-title small">Document 1: #{{ doc1.verification_code }}</div>
+                <span class="badge-status badge-neutral small">{{ doc1.document_type }}</span>
+            </div>
+            <div class="doc-preview-wrapper">
+                {% if doc1.filename and not doc1.filename.lower().endswith('.pdf') %}
+                    <img src="{{ url_for('uploaded_file', filename=doc1.filename) }}" alt="Doc 1 Preview" class="doc-preview-img">
+                {% else %}
+                    <div class="py-4 text-center text-muted"><i class="fa-solid fa-file-pdf fa-3x text-danger mb-2"></i><div>{{ doc1.filename }}</div></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="sec-card mb-0">
+            <div class="sec-card-header">
+                <div class="sec-card-title small">Document 2: #{{ doc2.verification_code }}</div>
+                <span class="badge-status badge-neutral small">{{ doc2.document_type }}</span>
+            </div>
+            <div class="doc-preview-wrapper">
+                {% if doc2.filename and not doc2.filename.lower().endswith('.pdf') %}
+                    <img src="{{ url_for('uploaded_file', filename=doc2.filename) }}" alt="Doc 2 Preview" class="doc-preview-img">
+                {% else %}
+                    <div class="py-4 text-center text-muted"><i class="fa-solid fa-file-pdf fa-3x text-danger mb-2"></i><div>{{ doc2.filename }}</div></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="sec-card text-center py-5">
+    <i class="fa-solid fa-code-compare fa-3x text-teal mb-3"></i>
+    <h5 class="fw-bold text-dark">Ready to Compare Documents</h5>
+    <p class="text-secondary small max-w-md mx-auto mb-4" style="max-width: 500px;">
+        Select any two screened documents above to perform a side-by-side consistency inspection of name, date of birth, document number, and validity dates.
+    </p>
+    <a href="{{ url_for('upload') }}" class="btn-teal">
+        <i class="fa-solid fa-plus me-1"></i> Screen a Document First
+    </a>
+</div>
+{% endif %}
+{% endblock %}
