@@ -23,9 +23,31 @@ from utils.image_analysis import screen_image_tampering, check_image_quality
 from utils.ai_detection import detect_ai_synthetic_indicators
 from utils.risk_score import calculate_risk_score
 
-# Initialize the Flask application
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "cybersec_super_secret_key_demo_v1")
+
+class VercelQueryPathMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        query_string = environ.get('QUERY_STRING', '')
+        if '__url=' in query_string:
+            import urllib.parse
+            parsed = urllib.parse.parse_qs(query_string)
+            if '__url' in parsed and parsed['__url']:
+                real_path = parsed['__url'][0]
+                if not real_path.startswith('/'):
+                    real_path = '/' + real_path
+                environ['PATH_INFO'] = real_path
+                clean_params = [p for p in query_string.split('&') if not p.startswith('__url=')]
+                environ['QUERY_STRING'] = '&'.join(clean_params)
+        elif environ.get('PATH_INFO', '').startswith('/api/index'):
+            sub_path = environ['PATH_INFO'].replace('/api/index.py', '').replace('/api/index', '')
+            environ['PATH_INFO'] = sub_path or '/'
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelQueryPathMiddleware(app.wsgi_app)
 
 # Vercel Serverless Environment detection & configuration
 IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
@@ -912,13 +934,7 @@ def run_quick_demo(test_name):
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return {
-        'error': '404 Not Found',
-        'request.path': request.path,
-        'request.query_string': request.query_string.decode('utf-8', errors='ignore'),
-        'environ_PATH_INFO': request.environ.get('PATH_INFO'),
-        'environ_QUERY_STRING': request.environ.get('QUERY_STRING')
-    }, 404
+    return redirect(url_for('dashboard'))
 
 
 @app.errorhandler(413)
