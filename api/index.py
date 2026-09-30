@@ -18,39 +18,6 @@ os.environ.setdefault('VERCEL', '1')
 
 try:
     from app import app
-
-    class VercelPathFixMiddleware:
-        """
-        WSGI Middleware for Vercel Serverless deployments.
-        Vercel's rewrite rules route requests to /api/index, but provide the
-        real requested URL in the 'x-matched-path' or other proxy headers.
-        This middleware restores the original PATH_INFO so Flask routes match.
-        """
-        def __init__(self, wsgi_app):
-            self.wsgi_app = wsgi_app
-
-        def __call__(self, environ, start_response):
-            raw_path = (
-                environ.get('HTTP_X_MATCHED_PATH')
-                or environ.get('HTTP_X_VERCEL_MATCHED_PATH')
-                or environ.get('HTTP_X_FORWARDED_URI')
-                or environ.get('HTTP_X_FORWARDED_URL')
-                or environ.get('PATH_INFO', '/')
-            )
-            if '?' in raw_path:
-                raw_path = raw_path.split('?', 1)[0]
-
-            if raw_path.startswith('/api/index'):
-                raw_path = raw_path[len('/api/index'):] or '/'
-            elif raw_path.startswith('/api') and not raw_path.startswith('/api/'):
-                raw_path = raw_path[len('/api'):] or '/'
-            elif raw_path.startswith('/api/'):
-                raw_path = raw_path[len('/api'):] or '/'
-
-            environ['PATH_INFO'] = raw_path
-            return self.wsgi_app(environ, start_response)
-
-    app.wsgi_app = VercelPathFixMiddleware(app.wsgi_app)
 except Exception as e:
     err_trace = traceback.format_exc()
     print("FATAL SERVERLESS STARTUP ERROR:", err_trace, flush=True)
