@@ -148,6 +148,8 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
 # ====================================================================
 
 @app.route('/')
+@app.route('/api')
+@app.route('/api/index')
 def index():
     return redirect(url_for('dashboard'))
 
@@ -900,7 +902,7 @@ def run_quick_demo(test_name):
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return render_template('base.html'), 404
+    return redirect(url_for('dashboard'))
 
 
 @app.errorhandler(413)
