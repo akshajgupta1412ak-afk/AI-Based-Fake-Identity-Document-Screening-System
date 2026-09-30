@@ -16,8 +16,30 @@ if root_dir not in sys.path:
 # Set VERCEL environment flag if not present
 os.environ.setdefault('VERCEL', '1')
 
+import urllib.parse
+
 try:
     from app import app
+
+    class VercelQueryPathMiddleware:
+        def __init__(self, wsgi_app):
+            self.wsgi_app = wsgi_app
+
+        def __call__(self, environ, start_response):
+            query_string = environ.get('QUERY_STRING', '')
+            if '__url=' in query_string:
+                parsed = urllib.parse.parse_qs(query_string)
+                if '__url' in parsed and parsed['__url']:
+                    real_path = parsed['__url'][0]
+                    if not real_path.startswith('/'):
+                        real_path = '/' + real_path
+                    environ['PATH_INFO'] = real_path
+                    # Clean up __url so application query parameters stay clean
+                    clean_params = [p for p in query_string.split('&') if not p.startswith('__url=')]
+                    environ['QUERY_STRING'] = '&'.join(clean_params)
+            return self.wsgi_app(environ, start_response)
+
+    app.wsgi_app = VercelQueryPathMiddleware(app.wsgi_app)
 except Exception as e:
     err_trace = traceback.format_exc()
     print("FATAL SERVERLESS STARTUP ERROR:", err_trace, flush=True)
