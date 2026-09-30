@@ -148,8 +148,6 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
 # ====================================================================
 
 @app.route('/')
-@app.route('/api')
-@app.route('/api/index')
 def index():
     return redirect(url_for('dashboard'))
 
