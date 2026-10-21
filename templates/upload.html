@@ -1,28 +1,41 @@
 {% extends "base.html" %}
 
 {% block title %}Upload Document - Security Screening{% endblock %}
-{% block page_title %}Upload Document{% endblock %}
-{% block page_subtitle %}Ingest an identity document scan for automated security screening.{% endblock %}
+{% block page_title %}Document Screening Ingestion{% endblock %}
+{% block page_subtitle %}Submit an identity document scan for automated optical extraction and risk assessment.{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
+        <!-- Academic Fictional Data Advisory -->
+        <div class="p-3 rounded bg-subtle mb-4 border-start border-4 border-warning">
+            <div class="d-flex align-items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-warning fs-5 mt-1"></i>
+                <div class="small text-secondary">
+                    <strong class="text-primary d-block mb-1">Academic Testing Notice:</strong>
+                    This system is designed for cybersecurity evaluation and college viva demonstrations. 
+                    Please use <strong>fictional, synthetic, or sample test documents</strong> for screening. 
+                    Do not upload real government-issued identity documents containing sensitive personal data.
+                </div>
+            </div>
+        </div>
+
         <!-- Main Upload Card -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-arrow-up-from-bracket text-teal"></i>
-                    Upload Document
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Upload Document Scan
                 </div>
-                <span class="badge-status badge-neutral">Supported: JPG, JPEG, PNG</span>
+                <span class="badge-status badge-neutral">Max Size: 5 MB</span>
             </div>
 
             <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
-                <!-- Document Type Selector -->
+                <!-- Document Classification Selector -->
                 <div class="mb-4">
-                    <label for="document_type" class="sec-label">Document Type</label>
+                    <label for="document_type" class="sec-label">Document Classification Type</label>
                     <select class="form-select sec-input" id="document_type" name="document_type" required>
-                        <option value="" disabled selected>-- Select Document Type --</option>
+                        <option value="" disabled selected>-- Select Document Category --</option>
                         <option value="ID Card">Identity Card</option>
                         <option value="Passport">Passport</option>
                         <option value="Driving Licence">Driving Licence</option>
@@ -32,58 +45,64 @@
                     </select>
                 </div>
 
-                <!-- File Drag and Drop Box -->
+                <!-- Drag & Drop Zone -->
                 <div class="mb-4">
-                    <label class="sec-label">Document Scan File</label>
+                    <label class="sec-label">Document Image Scan</label>
                     <div class="dropzone-clean" id="dropzone" onclick="document.getElementById('document_file').click();">
                         <i class="fa-solid fa-cloud-arrow-up dropzone-clean-icon"></i>
-                        <h6 class="fw-bold text-dark mb-1">Choose or Drag &amp; Drop Document Here</h6>
-                        <p class="text-secondary small mb-2">Supported formats: <strong>JPG, JPEG, PNG</strong> (Max size: 5 MB)</p>
+                        <h6 class="fw-bold text-primary mb-1">Choose or Drag &amp; Drop Document File Here</h6>
+                        <p class="text-secondary small mb-3">Supported formats: <strong>JPG, JPEG, PNG, PDF</strong> (Maximum size: 5 MB)</p>
                         <button type="button" class="btn-subtle py-1 px-3 small">
-                            <i class="fa-solid fa-folder-open me-1"></i> Browse File
+                            <i class="fa-solid fa-folder-open me-1"></i> Browse Files
                         </button>
-                        <input type="file" class="d-none" id="document_file" name="document_file" accept=".jpg,.jpeg,.png" required onchange="handleImageSelection(this)">
+                        <input type="file" class="d-none" id="document_file" name="document_file" accept=".jpg,.jpeg,.png,.pdf" required onchange="handleImageSelection(this)">
                     </div>
 
-                    <!-- Clean Document Preview (Appears right after selecting an image) -->
-                    <div id="image-preview-container" class="d-none mt-3 p-3 rounded bg-subtle border">
+                    <!-- Instant Document Preview Box -->
+                    <div id="image-preview-container" class="d-none mt-3 p-3 rounded bg-subtle">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small fw-semibold text-dark">
-                                <i class="fa-solid fa-image text-teal me-1"></i> Document Preview
+                            <span class="small fw-semibold text-primary">
+                                <i class="fa-solid fa-image text-primary me-1"></i> Selected Document File
                             </span>
-                            <span class="badge-status badge-genuine" id="preview-badge">Ready for Screening</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge-status badge-genuine" id="preview-badge">Ready for Screening</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 small" id="remove-file-btn" title="Remove File">
+                                    <i class="fa-solid fa-trash-can me-1"></i> Remove
+                                </button>
+                            </div>
                         </div>
-                        <div class="text-center bg-white p-2 rounded border mb-2">
+                        <div class="text-center p-2 rounded mb-2" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
                             <img id="image-preview" src="#" alt="Selected Document Preview" class="img-fluid rounded" style="max-height: 260px; object-fit: contain;">
                         </div>
                         <div class="d-flex justify-content-between small text-secondary px-1">
-                            <span id="preview-filename" class="text-truncate" style="max-width: 250px;">filename.png</span>
-                            <span id="preview-filesize">0 KB</span>
+                            <span id="preview-filename" class="text-truncate code-mono" style="max-width: 280px;">filename.png</span>
+                            <span id="preview-filesize" class="badge-status badge-neutral">0 KB</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Automated Image Quality Check Advisory -->
-                <div class="p-3 rounded bg-subtle border mb-4">
+                <!-- Pre-Screening Quality Assessment Advisory -->
+                <div class="p-3 rounded bg-subtle mb-4">
                     <div class="d-flex align-items-start gap-2">
-                        <i class="fa-solid fa-circle-info text-teal mt-1"></i>
+                        <i class="fa-solid fa-circle-info text-primary mt-1"></i>
                         <div class="small text-secondary">
-                            <strong class="text-dark d-block mb-1">Pre-Screening Image Quality Assessment</strong>
-                            Before performing fraud screening, the system automatically checks:
+                            <strong class="text-primary d-block mb-1">Automated Screening Checkpoints:</strong>
+                            Upon submission, the document is evaluated through 8 independent checkpoints:
                             <ul class="mb-1 ps-3 mt-1 text-muted" style="font-size: 0.8rem;">
-                                <li>Resolution (adequate optical dimensions)</li>
-                                <li>Blur (Laplacian focus variance)</li>
-                                <li>Brightness (underexposure / overexposure)</li>
-                                <li>Orientation (aspect ratio consistency)</li>
-                                <li>Text visibility (edge contrast)</li>
+                                <li>Cryptographic SHA-256 fingerprinting</li>
+                                <li>Optical resolution, focus blur, and contrast analysis</li>
+                                <li>Optical text recognition (OCR) and field extraction</li>
+                                <li>Field consistency &amp; document structure check</li>
+                                <li>OpenCV visual alteration and splice screening</li>
+                                <li>AI and synthetic generative artifact detection</li>
+                                <li>Local Demo Registry verification</li>
                             </ul>
-                            If image quality is insufficient, you will be prompted to upload a clearer image. <em>(Poor image quality is not classified as suspicious).</em>
                         </div>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn-teal w-100 justify-content-center py-2 fs-6">
+                <!-- Start Screening Button -->
+                <button type="submit" class="btn-electric w-100 justify-content-center py-2 fs-6" id="start-screening-btn">
                     <i class="fa-solid fa-magnifying-glass-chart"></i> Start Screening
                 </button>
             </form>
@@ -93,57 +112,57 @@
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-flask-vial text-teal"></i>
-                    Demonstration Mode (Synthetic Test Documents)
+                    <i class="fa-solid fa-flask-vial"></i>
+                    Demonstration Mode (Synthetic Test Records)
                 </div>
                 <span class="badge-status badge-neutral">Viva Demonstration</span>
             </div>
 
             <p class="small text-secondary mb-3">
-                Pre-calibrated synthetic test documents demonstrating each distinct outcome tier. Clearly labeled as demo records (no real identity data):
+                Pre-calibrated synthetic test documents demonstrating each distinct outcome tier (clean, altered, AI-synthetic, incomplete, expired):
             </p>
 
             <div class="row g-2">
                 <div class="col-md-6">
-                    <a href="{{ url_for('run_quick_demo', test_name='clean') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle border text-decoration-none text-dark hover-shadow">
+                    <a href="{{ url_for('run_quick_demo', test_name='clean') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
-                            <div class="small fw-semibold"><i class="fa-solid fa-circle-check text-success me-1"></i> Clean Sample</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-circle-check text-success me-1"></i> Clean Sample</div>
                             <div class="text-muted" style="font-size: 0.72rem;">Complete, consistent, registered</div>
                         </div>
                         <span class="badge-status badge-genuine small py-1">Likely Genuine</span>
                     </a>
                 </div>
                 <div class="col-md-6">
-                    <a href="{{ url_for('run_quick_demo', test_name='altered') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle border text-decoration-none text-dark hover-shadow">
+                    <a href="{{ url_for('run_quick_demo', test_name='altered') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
-                            <div class="small fw-semibold"><i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> Altered Document</div>
-                            <div class="text-muted" style="font-size: 0.72rem;">Spliced patch over ID number</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> Altered Document</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Spliced patch over document number</div>
                         </div>
                         <span class="badge-status badge-suspicious small py-1">Suspicious</span>
                     </a>
                 </div>
                 <div class="col-md-6">
-                    <a href="{{ url_for('run_quick_demo', test_name='ai_synthetic') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle border text-decoration-none text-dark hover-shadow">
+                    <a href="{{ url_for('run_quick_demo', test_name='ai_synthetic') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
-                            <div class="small fw-semibold"><i class="fa-solid fa-wand-magic-sparkles text-danger me-1"></i> AI-Generated Sample</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-wand-magic-sparkles text-danger me-1"></i> AI-Generated Sample</div>
                             <div class="text-muted" style="font-size: 0.72rem;">Diffusion noise, baseline wobble</div>
                         </div>
                         <span class="badge-status badge-suspicious small py-1">Suspicious</span>
                     </a>
                 </div>
                 <div class="col-md-6">
-                    <a href="{{ url_for('run_quick_demo', test_name='incomplete') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle border text-decoration-none text-dark hover-shadow">
+                    <a href="{{ url_for('run_quick_demo', test_name='incomplete') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
-                            <div class="small fw-semibold"><i class="fa-solid fa-circle-question text-warning me-1"></i> Incomplete Document</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-circle-question text-warning me-1"></i> Incomplete Document</div>
                             <div class="text-muted" style="font-size: 0.72rem;">Missing DOB &amp; Expiry fields</div>
                         </div>
                         <span class="badge-status badge-review small py-1">Requires Verification</span>
                     </a>
                 </div>
                 <div class="col-12">
-                    <a href="{{ url_for('run_quick_demo', test_name='expired') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle border text-decoration-none text-dark hover-shadow">
+                    <a href="{{ url_for('run_quick_demo', test_name='expired') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
-                            <div class="small fw-semibold"><i class="fa-solid fa-calendar-xmark text-warning me-1"></i> Expired Document</div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-calendar-xmark text-warning me-1"></i> Expired Document</div>
                             <div class="text-muted" style="font-size: 0.72rem;">Valid registry record, expired validity date</div>
                         </div>
                         <span class="badge-status badge-review small py-1">Requires Verification</span>
@@ -151,40 +170,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="p-3 rounded bg-white border text-secondary small text-center">
-            <i class="fa-solid fa-shield-halved text-teal me-1"></i>
-            <strong>Privacy &amp; Compliance Notice:</strong> Do not upload real personal identity documents. All test data processed must be synthetic or fictional.
-        </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function handleImageSelection(input) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const previewContainer = document.getElementById('image-preview-container');
-        const previewImg = document.getElementById('image-preview');
-        const previewFilename = document.getElementById('preview-filename');
-        const previewFilesize = document.getElementById('preview-filesize');
-
-        previewFilename.textContent = file.name;
-        const kb = (file.size / 1024).toFixed(1);
-        previewFilesize.textContent = kb > 1024 ? (kb / 1024).toFixed(2) + ' MB' : kb + ' KB';
-
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                previewContainer.classList.remove('d-none');
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewContainer.classList.add('d-none');
-        }
-    }
-}
-</script>
 {% endblock %}

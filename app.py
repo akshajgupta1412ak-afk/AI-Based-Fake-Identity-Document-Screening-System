@@ -22,6 +22,8 @@ from utils.validation import validate_document_data
 from utils.image_analysis import screen_image_tampering, check_image_quality
 from utils.ai_detection import detect_ai_synthetic_indicators
 from utils.risk_score import calculate_risk_score
+from utils.pdf_processing import process_pdf_document
+from utils.doc_type_detection import validate_identity_document, detect_document_type
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "cybersec_super_secret_key_demo_v1")
@@ -84,42 +86,126 @@ init_db()
 
 def run_screening_pipeline(filepath, document_type, filename, analyst_username='Analyst'):
     """
-    Executes the complete document screening pipeline across 6 independent checks:
-    1. Cryptographic SHA-256 Fingerprinting
-    2. Optical Information Extraction (Windows Media OCR / Tesseract)
-    3. Document Completeness, Consistency & Database Validation
-    4. OpenCV Visual Tampering Screening
-    5. AI / Synthetic Document Indicators
-    6. Multi-Factor Risk Assessment Engine (0-100) & Calibrated 3-Tier Classification
+    Executes the complete document screening pipeline across 8 independent checkpoints:
+    1. Cryptographic SHA-256 Fingerprinting & File Integrity
+    2. Image Quality & Optical Sharpness Assessment
+    3. Optical Information Extraction (Windows Media OCR / Tesseract)
+    4. Document Completeness, Consistency & Structure Validation
+    5. OpenCV Visual Alteration Forensics
+    6. AI / Synthetic Document Indicators
+    7. Local Demo Registry Verification
+    8. Multi-Factor Risk Assessment Engine (0-100) & Calibrated 3-Tier Classification
     Saves the audit dossier into SQLite and returns the verification code.
     """
     # 1. SHA-256 Cryptographic Fingerprint
     file_hash = compute_file_sha256(filepath)
 
-    # 2. Optical Character Recognition
-    ocr_data = extract_document_fields(filepath)
+    # Handle PDF document ingestion (text extraction and rendering to image)
+    is_pdf = filepath.lower().endswith('.pdf')
+    pdf_text = None
+    analysis_img_path = filepath
+    if is_pdf:
+        try:
+            pdf_res = process_pdf_document(filepath, output_dir=app.config.get('UPLOAD_FOLDER'))
+            pdf_text = pdf_res.get('text', '')
+            if pdf_res.get('rendered_image_path') and os.path.exists(pdf_res['rendered_image_path']):
+                analysis_img_path = pdf_res['rendered_image_path']
+        except Exception:
+            pdf_text = ""
+
+    # 2. Image Quality Assessment
+    quality_res = check_image_quality(analysis_img_path)
+
+    # 3. Optical Character Recognition
+    ocr_data = extract_document_fields(analysis_img_path, pre_extracted_text=pdf_text)
     doc_number = ocr_data.get('document_number', 'Not detected')
     extracted_name = ocr_data.get('name', 'Not detected')
 
     # Fingerprint check against previous submissions
     fingerprint_res = check_and_record_fingerprint(file_hash, doc_number, filename)
 
-    # 3. Validation against Rules & SQLite Database
+    # GATEKEEPER: Strict Identity-Document Type Validation (runs BEFORE authenticity scoring)
+    gatekeeper = validate_identity_document(ocr_data, analysis_img_path, declared_type=document_type, quality_res=quality_res)
+
+    if not gatekeeper.get('is_valid') or gatekeeper.get('status') in ['NOT_AN_ID', 'UNABLE_TO_IDENTIFY', 'UNREADABLE']:
+        # Gatekeeper halted downstream scoring
+        verification_code = f"VER-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        status_label = gatekeeper['title']
+        result_code = 'UNABLE_TO_IDENTIFY' if gatekeeper['status'] in ['UNABLE_TO_IDENTIFY', 'UNREADABLE'] else 'NO_ID_DETECTED'
+        
+        meta_payload = {
+            'gatekeeper': gatekeeper,
+            'is_gatekeeper_blocked': True,
+            'status_label': status_label,
+            'summary_verdict': gatekeeper['message'],
+            'why_this_result': gatekeeper['message'],
+            'reasons': [gatekeeper['message']] + gatekeeper.get('evidence', []),
+            'positive_indicators': [],
+            'attention_indicators': gatekeeper.get('evidence', []),
+            'completeness': 0,
+            'breakdown': {},
+            'contributing_factors': [],
+            'security_checks': [],
+            'six_checks': [],
+            'extracted_fields': [],
+            'ai_detection': {'status': 'SKIPPED', 'summary': 'Downstream forensics halted by document classification gatekeeper.'},
+            'suggested_action': 'Please upload a clear scan or photograph of a supported identity document (ID Card, Passport, Driving Licence, College ID, or Certificate).',
+            'audit_trail': [
+                {'step': 1, 'name': 'Document Ingestion', 'status': 'Completed', 'icon': 'fa-solid fa-cloud-arrow-up'},
+                {'step': 2, 'name': 'SHA-256 Digest Registered', 'status': 'Completed', 'icon': 'fa-solid fa-fingerprint'},
+                {'step': 3, 'name': 'Optical Analysis & Quality Check', 'status': 'Completed', 'icon': 'fa-solid fa-image'},
+                {'step': 4, 'name': 'Identity Document Validation', 'status': 'Halted' if result_code == 'NO_ID_DETECTED' else 'Unreadable', 'icon': 'fa-solid fa-shield-halved'}
+            ]
+        }
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO verification_records (
+                verification_code, document_type, document_number, extracted_name,
+                risk_score, result, reasons_json, checks_json, ocr_data_json,
+                image_analysis_json, fingerprint, fingerprint_status, filename, analyst_user
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            verification_code,
+            document_type,
+            None,
+            None,
+            -1,
+            result_code,
+            json.dumps(meta_payload),
+            json.dumps([]),
+            json.dumps(ocr_data),
+            json.dumps({'gatekeeper_blocked': True, 'gatekeeper': gatekeeper}),
+            file_hash,
+            fingerprint_res['status'],
+            filename,
+            analyst_username
+        ))
+        conn.commit()
+        conn.close()
+
+        return verification_code
+
+    # If document type is confirmed, proceed with full 8-checkpoint authenticity screening
+    # 4. Validation against Rules & Local Demo SQLite Database
     validation_res = validate_document_data(ocr_data, document_type)
 
-    # 4. OpenCV Image Tampering Screening
-    image_analysis_res = screen_image_tampering(filepath)
+    # 5. OpenCV Image Tampering Screening
+    image_analysis_res = screen_image_tampering(analysis_img_path)
 
-    # 5. AI / Synthetic Document Indicators Screening
-    ai_detection_res = detect_ai_synthetic_indicators(filepath, ocr_data)
+    # 6. AI / Synthetic Document Indicators Screening
+    ai_detection_res = detect_ai_synthetic_indicators(analysis_img_path, ocr_data)
 
-    # 6. Multi-Factor Risk Score Calculation (6 Independent Checks)
-    risk_res = calculate_risk_score(ocr_data, validation_res, image_analysis_res, ai_detection_res, fingerprint_res)
+    # 7. Multi-Factor Risk Score Calculation (8 Independent Checkpoints)
+    risk_res = calculate_risk_score(ocr_data, validation_res, image_analysis_res, ai_detection_res, fingerprint_res, quality_res)
 
-    # 7. Persist Verification Record in SQLite Database
+    # 8. Persist Verification Record in SQLite Database
     verification_code = f"VER-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
     meta_payload = {
+        'gatekeeper': gatekeeper,
+        'is_gatekeeper_blocked': False,
         'reasons': risk_res.get('reasons', []),
         'positive_indicators': risk_res.get('positive_indicators', []),
         'attention_indicators': risk_res.get('attention_indicators', []),
@@ -127,11 +213,15 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
         'breakdown': risk_res.get('breakdown', {}),
         'contributing_factors': risk_res.get('contributing_factors', []),
         'security_checks': risk_res.get('security_checks', []),
-        'six_checks': risk_res.get('six_checks', []),
+        'six_checks': risk_res.get('security_checks', []),
         'extracted_fields': validation_res.get('extracted_fields', []),
         'ai_detection': ai_detection_res,
         'summary_verdict': risk_res.get('summary_verdict', ''),
         'why_this_result': risk_res.get('why_this_result', ''),
+        'why_flagged': risk_res.get('why_flagged', []),
+        'evidence': risk_res.get('evidence', {}),
+        'missing_or_uncertain': risk_res.get('missing_or_uncertain', []),
+        'suggested_action': risk_res.get('suggested_action', ''),
         'audit_trail': risk_res.get('audit_trail', [])
     }
 
@@ -192,18 +282,21 @@ def dashboard():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Aggregate metric counters
-    cursor.execute("SELECT COUNT(*) FROM verification_records")
+    # Aggregate metric counters: Only completed screenings count towards authenticity metrics
+    cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result NOT IN ('NO_ID_DETECTED', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE') AND result NOT LIKE 'REJECTED%'")
     total_screened = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result LIKE '%GENUINE%'")
     genuine_count = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result LIKE '%VERIFICATION%'")
+    cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result LIKE '%VERIFICATION%' AND result NOT LIKE 'UNABLE%'")
     review_count = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result LIKE '%SUSPICIOUS%'")
     suspicious_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result IN ('NO_ID_DETECTED', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE') OR result LIKE 'REJECTED%'")
+    rejected_count = cursor.fetchone()[0]
 
     # Calculate real risk distribution percentages
     if total_screened > 0:
@@ -256,7 +349,8 @@ def dashboard():
         'total_screened': total_screened,
         'genuine': genuine_count,
         'requires_review': review_count,
-        'suspicious': suspicious_count
+        'suspicious': suspicious_count,
+        'rejected': rejected_count
     }
 
     return render_template(
@@ -331,17 +425,51 @@ def upload():
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             file.save(saved_path)
 
-            # Perform preliminary image quality check before fraud screening
-            quality_res = check_image_quality(saved_path)
-            if not quality_res.get('adequate', True):
-                # Clean up temporary uploaded file
+            # Security Check: Ensure file is not 0 bytes
+            if not os.path.exists(saved_path) or os.path.getsize(saved_path) == 0:
                 try:
                     if os.path.exists(saved_path):
                         os.remove(saved_path)
                 except Exception:
                     pass
-                flash("Image quality is insufficient for reliable screening. Please upload a clearer image.", "warning")
+                flash("Uploaded file is empty (0 bytes). Please upload a valid document scan.", "danger")
                 return redirect(request.url)
+
+            # PDF Validation: verify encryption, bounds, and readability
+            if saved_path.lower().endswith('.pdf'):
+                try:
+                    process_pdf_document(saved_path, output_dir=app.config['UPLOAD_FOLDER'])
+                except ValueError as ve:
+                    try:
+                        if os.path.exists(saved_path):
+                            os.remove(saved_path)
+                    except Exception:
+                        pass
+                    flash(str(ve), "danger")
+                    return redirect(request.url)
+                except Exception:
+                    try:
+                        if os.path.exists(saved_path):
+                            os.remove(saved_path)
+                    except Exception:
+                        pass
+                    flash("Unable to process the uploaded PDF file. Please ensure it is a valid, uncorrupted document.", "danger")
+                    return redirect(request.url)
+
+            # File Integrity & Readability Check (protect against corrupted images)
+            if saved_path.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                try:
+                    from PIL import Image
+                    with Image.open(saved_path) as test_img:
+                        test_img.verify()
+                except Exception:
+                    try:
+                        if os.path.exists(saved_path):
+                            os.remove(saved_path)
+                    except Exception:
+                        pass
+                    flash("The uploaded image file is corrupted or unreadable. Please upload a valid scan.", "danger")
+                    return redirect(request.url)
 
             analyst = session.get('username', 'Analyst')
             code = run_screening_pipeline(saved_path, document_type, unique_filename, analyst)
@@ -395,6 +523,25 @@ def result(code):
     checks = json.loads(record['checks_json']) if record.get('checks_json') else []
     ocr_data = json.loads(record['ocr_data_json']) if record.get('ocr_data_json') else {}
     image_analysis = json.loads(record['image_analysis_json']) if record.get('image_analysis_json') else {}
+
+    # Check for Gatekeeper Interception
+    is_gatekeeper_blocked = False
+    gatekeeper = {}
+    if isinstance(raw_meta, dict):
+        is_gatekeeper_blocked = raw_meta.get('is_gatekeeper_blocked', False)
+        gatekeeper = raw_meta.get('gatekeeper', {})
+    if record['risk_score'] == -1 or record['result'] in ['NO_ID_DETECTED', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE']:
+        is_gatekeeper_blocked = True
+        if not gatekeeper:
+            is_unreadable = record['result'] in ['UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE']
+            gatekeeper = {
+                'status': 'UNABLE_TO_IDENTIFY' if is_unreadable else 'NOT_AN_ID',
+                'title': 'Unable to Identify Document' if is_unreadable else 'No Identity Document Detected',
+                'message': ('The uploaded file may contain an identity document, but there is insufficient readable information to identify it confidently. Please upload a clearer image or PDF.'
+                            if is_unreadable else
+                            'The uploaded file does not appear to contain a supported identity document. Please upload a clear image or PDF of an identity document and try again.'),
+                'evidence': raw_meta.get('reasons', []) if isinstance(raw_meta, dict) else []
+            }
 
     score = record['risk_score']
     # Exact thresholds requested:
@@ -478,6 +625,21 @@ def result(code):
             {'name': 'Database Verification', 'penalty': breakdown.get('database_verification', 0)}
         ]
 
+    why_flagged = raw_meta.get('why_flagged')
+    if why_flagged is None:
+        why_flagged = [r for r in reasons if "No significant suspicious" not in r]
+
+    evidence = raw_meta.get('evidence', {})
+    missing_or_uncertain = raw_meta.get('missing_or_uncertain', [])
+    suggested_action = raw_meta.get('suggested_action')
+    if not suggested_action:
+        if score <= 25:
+            suggested_action = "No further automated screening needed. Proceed with standard operational workflow."
+        elif score <= 55:
+            suggested_action = "Request higher-resolution document scan or cross-check identity details with secondary documentation."
+        else:
+            suggested_action = "Manual forensic review recommended. Verify physical document security features, microtext, and issuer credentials."
+
     risk = {
         'score': score,
         'completeness': completeness,
@@ -485,6 +647,10 @@ def result(code):
         'status_label': record['result'],
         'summary_verdict': summary_verdict,
         'why_this_result': why_this_result,
+        'why_flagged': why_flagged,
+        'evidence': evidence,
+        'missing_or_uncertain': missing_or_uncertain,
+        'suggested_action': suggested_action,
         'badge_class': badge_class,
         'color_code': color_code,
         'reasons': reasons,
@@ -518,13 +684,19 @@ def result(code):
         six_checks=security_checks,
         extracted_fields=extracted_fields,
         why_this_result=why_this_result,
+        why_flagged=why_flagged,
+        evidence=evidence,
+        missing_or_uncertain=missing_or_uncertain,
+        suggested_action=suggested_action,
         contributing_factors=contributing_factors,
         audit_trail=audit_trail,
         ai_detection=raw_meta.get('ai_detection', {}) if isinstance(raw_meta, dict) else {},
         ocr=ocr_data,
         image_analysis=image_analysis,
         fingerprint=fingerprint,
-        validation=validation
+        validation=validation,
+        is_gatekeeper_blocked=is_gatekeeper_blocked,
+        gatekeeper=gatekeeper
     )
 
 
@@ -551,7 +723,12 @@ def report(code):
     checks = json.loads(record['checks_json']) if record.get('checks_json') else []
 
     score = record['risk_score']
-    if score <= 25:
+    if score == -1:
+        risk_level = "NOT APPLICABLE"
+        status_label = raw_meta.get('status_label', record['result'])
+        badge_class = "badge-neutral"
+        color_code = "#64748B"
+    elif score <= 25:
         risk_level = "LOW RISK"
         status_label = "LIKELY GENUINE"
         badge_class = "badge-genuine"
@@ -621,6 +798,18 @@ def report(code):
             {'step': 9, 'name': 'Final Report Generated', 'status': 'Completed'}
         ]
 
+    suggested_action = raw_meta.get('suggested_action')
+    if not suggested_action:
+        if score <= 25:
+            suggested_action = "No further automated screening needed. Proceed with standard operational workflow."
+        elif score <= 55:
+            suggested_action = "Request higher-resolution document scan or cross-check identity details with secondary documentation."
+        else:
+            suggested_action = "Manual forensic review recommended. Verify physical document security features, microtext, and issuer credentials."
+    why_flagged = raw_meta.get('why_flagged') or [r for r in raw_meta.get('reasons', []) if "No significant suspicious" not in r]
+    evidence = raw_meta.get('evidence', {})
+    missing_or_uncertain = raw_meta.get('missing_or_uncertain', [])
+
     return render_template(
         'report_pdf.html',
         record=record,
@@ -630,6 +819,10 @@ def report(code):
         badge_class=badge_class,
         color_code=color_code,
         why_this_result=why_this_result,
+        why_flagged=why_flagged,
+        evidence=evidence,
+        missing_or_uncertain=missing_or_uncertain,
+        suggested_action=suggested_action,
         security_checks=security_checks,
         extracted_fields=extracted_fields,
         contributing_factors=contributing_factors,
@@ -715,7 +908,7 @@ def reports():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM verification_records")
+    cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result NOT IN ('NO_ID_DETECTED', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE') AND result NOT LIKE 'REJECTED%'")
     total_scans = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM verification_records WHERE result LIKE '%GENUINE%'")

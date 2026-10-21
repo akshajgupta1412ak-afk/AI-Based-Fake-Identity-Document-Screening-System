@@ -10,11 +10,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --text-primary: #1F2937;
-            --text-secondary: #4B5563;
-            --text-muted: #6B7280;
-            --primary-teal: #0F766E;
-            --border-color: #E5E7EB;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #64748B;
+            --accent-primary: #10B981;
+            --border-color: #E2E8F0;
             --bg-subtle: #F8FAFC;
         }
 
@@ -38,7 +38,7 @@
         }
 
         .report-header {
-            border-bottom: 2px solid var(--primary-teal);
+            border-bottom: 2px solid var(--accent-primary);
             padding-bottom: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -60,7 +60,7 @@
         }
 
         .section-heading {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 700;
             color: var(--text-primary);
             text-transform: uppercase;
@@ -110,20 +110,26 @@
 
         .badge-genuine {
             background-color: #ECFDF5;
-            color: #065F46;
-            border: 1px solid #A7F3D0;
+            color: #15803D;
+            border: 1px solid #BBF7D0;
         }
 
         .badge-review {
             background-color: #FFFBEB;
-            color: #92400E;
+            color: #B45309;
             border: 1px solid #FDE68A;
         }
 
         .badge-suspicious {
             background-color: #FEF2F2;
-            color: #991B1B;
+            color: #B91C1C;
             border: 1px solid #FECACA;
+        }
+
+        .badge-neutral {
+            background-color: #F8FAFC;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
         }
 
         .code-rep {
@@ -157,7 +163,7 @@
         .disclaimer-box {
             background-color: #F8FAFC;
             border: 1px solid #E2E8F0;
-            border-left: 4px solid var(--primary-teal);
+            border-left: 4px solid var(--accent-primary);
             border-radius: 4px;
             padding: 1rem 1.25rem;
             font-size: 0.82rem;
@@ -198,7 +204,7 @@
             <i class="fa-solid fa-arrow-left me-1"></i> Back to Result Dossier
         </a>
         <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-success btn-sm px-3">
+            <button onclick="window.print()" class="btn btn-primary btn-sm px-3" style="background-color: var(--accent-primary); border-color: var(--accent-primary); color: #03130D; font-weight: 600;">
                 <i class="fa-solid fa-print me-1"></i> Print / Save as PDF
             </button>
         </div>
@@ -210,7 +216,7 @@
         <div class="report-header d-flex justify-content-between align-items-start">
             <div>
                 <div class="d-flex align-items-center gap-2 mb-1">
-                    <i class="fa-solid fa-shield-halved text-teal" style="font-size: 1.75rem; color: #0F766E;"></i>
+                    <i class="fa-solid fa-shield-halved" style="font-size: 1.75rem; color: var(--accent-primary);"></i>
                     <h1 class="report-title mb-0">Document Security Screening Report</h1>
                 </div>
                 <div class="report-subtitle">AI-Based Fake Identity &amp; Document Screening System</div>
@@ -254,42 +260,61 @@
 
         <!-- 2. "Why was this document classified this way?" -->
         <div class="section-heading">
-            <i class="fa-solid fa-circle-question" style="color: #0F766E;"></i>
+            <i class="fa-solid fa-circle-question" style="color: var(--accent-primary);"></i>
             Why This Result Was Generated
         </div>
         <div class="p-3 border rounded bg-subtle mb-3">
             <p class="mb-2 fw-medium text-dark">{{ why_this_result }}</p>
             <div class="small text-secondary">
-                Classification is calculated objectively across independent OCR legibility, document completeness, field consistency, document structure, OpenCV visual tampering forensics, synthetic AI indicators, and database registry cross-referencing.
+                Classification is calculated across 8 independent checkpoints: Image Quality, OCR extraction, field consistency, document structure, OpenCV visual forensics, synthetic AI indicators, Local Demo Registry matching, and SHA-256 file integrity.
             </div>
         </div>
 
-        <!-- 3. Security Checks -->
+        {% if why_flagged %}
+        <div class="mb-3">
+            <strong class="small text-dark d-block mb-1">Flagged Observations:</strong>
+            <ul class="small text-secondary mb-0 ps-3">
+                {% for item in why_flagged %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if suggested_action %}
+        <div class="p-2 rounded bg-light border mb-3 small">
+            <strong>Suggested Next Verification Step:</strong> {{ suggested_action }}
+        </div>
+        {% endif %}
+
+        <!-- 3. Security Checks (8 Checkpoints) -->
         <div class="section-heading">
-            <i class="fa-solid fa-shield-check" style="color: #0F766E;"></i>
+            <i class="fa-solid fa-shield-halved" style="color: var(--accent-primary);"></i>
             Security Checks
         </div>
         <table class="sec-table-rep">
             <thead>
                 <tr>
                     <th style="width: 28%;">Check Name</th>
-                    <th style="width: 18%;">Status</th>
-                    <th style="width: 54%;">Findings &amp; Details</th>
+                    <th style="width: 20%;">Status</th>
+                    <th style="width: 52%;">Findings &amp; Details</th>
                 </tr>
             </thead>
             <tbody>
                 {% for chk in security_checks %}
                 <tr>
                     <td class="fw-semibold text-dark">
-                        <i class="{{ chk.icon }} me-1" style="color: #0F766E;"></i> {{ chk.name }}
+                        <i class="{{ chk.icon }} me-1" style="color: var(--accent-primary);"></i> {{ chk.name }}
                     </td>
                     <td>
-                        {% if chk.status == 'PASSED' %}
+                        {% if chk.status in ['Passed', 'PASSED'] %}
                             <span class="badge-rep badge-genuine">✓ Passed</span>
-                        {% elif chk.status == 'WARNING' %}
-                            <span class="badge-rep badge-review">⚠ Warning</span>
-                        {% elif chk.status == 'NOT VERIFIED' %}
+                        {% elif chk.status in ['Not Verified', 'Warning', 'WARNING'] %}
                             <span class="badge-rep badge-review">⚠ Not Verified</span>
+                        {% elif chk.status == 'Unable to Check' %}
+                            <span class="badge-rep badge-review">⚠ Unable to Check</span>
+                        {% elif chk.status == 'Not Checked' %}
+                            <span class="badge-rep badge-neutral">- Not Checked</span>
                         {% else %}
                             <span class="badge-rep badge-suspicious">✕ Flagged</span>
                         {% endif %}
@@ -302,7 +327,7 @@
 
         <!-- 4. Extracted Document Information -->
         <div class="section-heading">
-            <i class="fa-solid fa-id-card" style="color: #0F766E;"></i>
+            <i class="fa-solid fa-id-card" style="color: var(--accent-primary);"></i>
             Extracted Document Information
         </div>
         <table class="sec-table-rep">
@@ -322,7 +347,7 @@
                         {% if item.is_valid %}
                             <span class="text-success small fw-semibold">✓ {{ item.status }}</span>
                         {% else %}
-                            <span class="text-warning-emphasis small fw-semibold">⚠ {{ item.status }}</span>
+                            <span class="text-warning small fw-semibold">⚠ {{ item.status }}</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -332,7 +357,7 @@
 
         <!-- 5. Risk Breakdown -->
         <div class="section-heading">
-            <i class="fa-solid fa-chart-simple" style="color: #0F766E;"></i>
+            <i class="fa-solid fa-chart-simple" style="color: var(--accent-primary);"></i>
             Risk Breakdown
         </div>
         <table class="sec-table-rep">
@@ -346,13 +371,13 @@
                 {% for factor in contributing_factors %}
                 <tr>
                     <td class="text-secondary small">{{ factor.name }}</td>
-                    <td class="text-end fw-semibold {% if factor.penalty > 0 %}text-warning-emphasis{% else %}text-muted{% endif %}">
+                    <td class="text-end fw-semibold {% if factor.penalty > 0 %}text-warning{% else %}text-muted{% endif %}">
                         {% if factor.penalty > 0 %}+{{ factor.penalty }}{% else %}+0{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
                 <tr class="table-light">
-                    <td class="fw-bold text-dark text-uppercase">Total Risk</td>
+                    <td class="fw-bold text-dark text-uppercase">Total Risk Score</td>
                     <td class="text-end fw-bold fs-6" style="color: {{ color_code }};">{{ score }} / 100</td>
                 </tr>
             </tbody>
@@ -360,7 +385,7 @@
 
         <!-- 6. Audit Trail -->
         <div class="section-heading">
-            <i class="fa-solid fa-list-ol" style="color: #0F766E;"></i>
+            <i class="fa-solid fa-list-ol" style="color: var(--accent-primary);"></i>
             Audit Trail
         </div>
         <div class="audit-trail-rep">
@@ -372,9 +397,9 @@
             {% endfor %}
         </div>
 
-        <!-- 7. Disclaimer (Exact User Specification) -->
+        <!-- 7. Disclaimer (Exact Specification) -->
         <div class="disclaimer-box">
-            <strong>Disclaimer:</strong> This report provides an automated preliminary screening assessment. It does not constitute official verification or legal determination of document authenticity.
+            <strong>Disclaimer:</strong> This report provides an automated preliminary screening assessment. It does not constitute official verification or legal determination of document authenticity. Record matching references a Local Demo Registry. SHA-256 fingerprint validates subsequent file byte modifications and does not prove original document authenticity.
         </div>
     </div>
 

@@ -15,6 +15,7 @@ static/uploads/*.jpg
 static/uploads/*.jpeg
 static/uploads/*.png
 static/uploads/*.pdf
+public/static/uploads/
 !sample_docs/
 temp_*.png
 temp_*.jpg

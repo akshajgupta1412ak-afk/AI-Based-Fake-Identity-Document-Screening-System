@@ -6,21 +6,21 @@
 
 {% block content %}
 <!-- Top Quick Action Bar -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary-subtle">
     <div class="d-flex align-items-center gap-3">
         <a href="{{ url_for('dashboard') }}" class="btn-subtle py-1 px-3">
             <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
         </a>
         <div class="small text-secondary">
-            Screening ID: <strong class="text-dark code-mono">{{ record.verification_code }}</strong>
+            Screening ID: <strong class="text-primary code-mono">{{ record.verification_code }}</strong>
         </div>
         <div class="small text-muted d-none d-md-block">
             <i class="fa-regular fa-calendar me-1"></i> {{ record.created_at[:16] }}
         </div>
     </div>
     <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
-        <a href="{{ url_for('report', code=record.verification_code) }}" target="_blank" class="btn-teal">
-            <i class="fa-solid fa-file-arrow-down"></i> Download Screening Report
+        <a href="{{ url_for('report', code=record.verification_code) }}" target="_blank" class="btn-electric">
+            <i class="fa-solid fa-file-arrow-down"></i> Export Report (PDF)
         </a>
         <a href="{{ url_for('compare', base=record.verification_code) }}" class="btn-subtle">
             <i class="fa-solid fa-code-compare"></i> Compare
@@ -31,17 +31,17 @@
     </div>
 </div>
 
-<!-- Two-Column Layout -->
+<!-- Professional Two-Column Layout -->
 <div class="row g-4">
     <!-- =============================================================
-         LEFT COLUMN: Document Preview, Integrity, Audit Trail
+         LEFT COLUMN: Document Preview, Extracted Fields, Integrity
          ============================================================= -->
     <div class="col-lg-5">
         <!-- 1. Document Preview Card -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-image text-teal"></i>
+                    <i class="fa-solid fa-image"></i>
                     Document Preview
                 </div>
                 <span class="badge-status badge-neutral">{{ record.document_type }}</span>
@@ -52,75 +52,128 @@
                     <img src="{{ url_for('uploaded_file', filename=record.filename) }}" 
                          alt="Document Scan Preview" 
                          class="doc-preview-img"
-                         onerror="this.onerror=null; this.src='https://placehold.co/600x400/f8fafc/64748b?text=Document+Preview';">
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x400/101827/94a3b8?text=Document+Preview';">
                 {% else %}
                     <div class="py-5 text-center text-secondary">
                         <i class="fa-solid fa-file-pdf fa-4x text-danger mb-2"></i>
-                        <div class="fw-semibold">PDF Document Ingested</div>
+                        <div class="fw-semibold text-primary">PDF Document Ingested</div>
                         <div class="small text-muted">{{ record.filename }}</div>
                     </div>
                 {% endif %}
             </div>
 
-            <div class="d-flex justify-content-between text-secondary small px-1 border-top pt-2">
-                <span>File: <strong class="text-dark">{{ record.filename[:22] }}...</strong></span>
-                <span>Type: <strong class="text-dark">{{ record.document_type }}</strong></span>
+            <div class="d-flex justify-content-between text-secondary small px-1 border-top border-secondary-subtle pt-2">
+                <span>File: <strong class="text-primary">{{ record.filename[:22] }}...</strong></span>
+                <span>Type: <strong class="text-primary">{{ record.document_type }}</strong></span>
             </div>
         </div>
 
-        <!-- 2. Document Integrity Card -->
+        {% if not is_gatekeeper_blocked %}
+        <!-- 2. Extracted Document Information Card -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-fingerprint text-teal"></i>
-                    Cryptographic Document Integrity
+                    <i class="fa-solid fa-address-card"></i>
+                    Extracted Information
                 </div>
-                <span class="small text-muted">SHA-256</span>
+                <span class="small text-muted">OCR Optical Extraction</span>
             </div>
 
-            <div class="p-3 rounded mb-3 {% if fingerprint.status == 'DOCUMENT_CHANGED' %}bg-danger-subtle border border-danger-subtle{% elif fingerprint.status == 'IDENTICAL_REUPLOAD' %}bg-info-subtle border border-info-subtle{% else %}bg-subtle border{% endif %}">
+            <div class="table-responsive">
+                <table class="sec-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Field Name</th>
+                            <th style="width: 45%;">Extracted Value</th>
+                            <th style="width: 25%;">Validation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in extracted_fields %}
+                        <tr>
+                            <td class="fw-medium text-secondary small">{{ f.field }}</td>
+                            <td class="fw-semibold text-primary">
+                                {% if f.field == 'Document Number' and f.value != 'Not detected' %}
+                                    <span class="code-mono">{{ f.value }}</span>
+                                								{% else %}
+                                    {{ f.value }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if f.is_valid %}
+                                    <span class="badge-status badge-genuine py-0 px-2 small">
+                                        <i class="fa-solid fa-check"></i> {{ f.status }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge-status badge-review py-0 px-2 small">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ f.status }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 3. Cryptographic Document Integrity Card -->
+        <div class="sec-card mb-4">
+            <div class="sec-card-header">
+                <div class="sec-card-title">
+                    <i class="fa-solid fa-fingerprint"></i>
+                    Document Integrity (SHA-256)
+                </div>
+                <span class="badge-status badge-neutral">Cryptographic Digest</span>
+            </div>
+
+            <div class="p-3 rounded mb-3 {% if fingerprint.status == 'DOCUMENT_CHANGED' %}bg-danger-subtle border border-danger-subtle{% elif fingerprint.status == 'IDENTICAL_REUPLOAD' %}bg-info-subtle border border-info-subtle{% else %}bg-subtle{% endif %}">
                 <div class="d-flex align-items-center gap-2">
                     {% if fingerprint.status == 'DOCUMENT_CHANGED' %}
                         <i class="fa-solid fa-triangle-exclamation text-danger fa-lg"></i>
                         <div>
-                            <strong class="text-danger small d-block">Document Has Changed</strong>
-                            <div class="small text-secondary">Hash mismatch: file bytes differ from previous verification of this document ID.</div>
+                            <strong class="text-danger small d-block">Document File Modified</strong>
+                            <div class="small text-secondary">Hash mismatch: file bytes differ from historical submission of this document ID.</div>
                         </div>
                     {% elif fingerprint.status == 'IDENTICAL_REUPLOAD' %}
                         <i class="fa-solid fa-circle-info text-primary fa-lg"></i>
                         <div>
                             <strong class="text-primary small d-block">Identical Re-upload</strong>
-                            <div class="small text-secondary">Identical file previously screened in security registry.</div>
+                            <div class="small text-secondary">Identical file previously screened and registered in audit log.</div>
                         </div>
                     {% else %}
                         <i class="fa-solid fa-circle-check text-success fa-lg"></i>
                         <div>
-                            <strong class="text-success small d-block">Original Document Registered</strong>
-                            <div class="small text-secondary">Cryptographic fingerprint successfully recorded into audit log.</div>
+                            <strong class="text-success small d-block">Fresh Document Registered</strong>
+                            <div class="small text-secondary">Cryptographic SHA-256 digest recorded into security audit log.</div>
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="small text-muted mb-1">SHA-256 Hash Digest:</div>
-            <div class="d-flex align-items-center gap-1">
-                <span class="code-mono text-truncate d-inline-block" style="max-width: 320px;" title="{{ fingerprint.fingerprint }}">
+            <div class="small text-muted mb-1">SHA-256 Fingerprint:</div>
+            <div class="d-flex align-items-center gap-1 mb-2">
+                <span class="code-mono text-truncate d-inline-block" style="max-width: 310px;" title="{{ fingerprint.fingerprint }}">
                     {{ fingerprint.fingerprint }}
                 </span>
                 <button class="btn-subtle py-1 px-2 small" onclick="copyToClipboard('{{ fingerprint.fingerprint }}')" title="Copy Hash">
                     <i class="fa-regular fa-copy"></i>
                 </button>
             </div>
+            <div class="small text-muted" style="font-size: 0.74rem;">
+                <em>Notice: A SHA-256 fingerprint tracks file tampering relative to previously stored files, but does not prove original document authenticity.</em>
+            </div>
         </div>
 
-        <!-- 3. Simple Audit Trail -->
+        <!-- 4. Screening Audit Trail -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-timeline text-teal"></i>
+                    <i class="fa-solid fa-timeline"></i>
                     Screening Audit Trail
                 </div>
-                <span class="badge-status badge-genuine">Verified</span>
+                <span class="badge-status badge-genuine">Verified Complete</span>
             </div>
 
             <div class="audit-trail-vertical">
@@ -130,7 +183,7 @@
                         <i class="fa-solid fa-check"></i>
                     </div>
                     <div class="audit-trail-text">
-                        <span class="fw-semibold text-dark">{{ item.name }}</span>
+                        <span class="fw-semibold text-primary">{{ item.name }}</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -139,39 +192,121 @@
     </div>
 
     <!-- =============================================================
-         RIGHT COLUMN: Screening Result, 7 Checks, Why This Result,
-                       Field Info, Risk Breakdown
+         RIGHT COLUMN: Result Summary, 8 Checkpoints, Explainability,
+                       Risk Breakdown
          ============================================================= -->
     <div class="col-lg-7">
-        <!-- 1. SCREENING RESULT & RISK INDICATOR -->
+        {% if is_gatekeeper_blocked %}
+        <!-- =========================================================
+             GATEKEEPER INTERCEPTION CARD (No Risk Score Displayed)
+             ========================================================= -->
+        <div class="sec-card mb-4 p-4 border border-warning-subtle">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY'] %}
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background-color: rgba(251, 191, 36, 0.15); width: 56px; height: 56px;">
+                        <i class="fa-solid fa-eye-slash text-warning fs-3"></i>
+                    </div>
+                {% else %}
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background-color: rgba(244, 63, 94, 0.15); width: 56px; height: 56px;">
+                        <i class="fa-solid fa-shield-xmark text-danger fs-3"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <span class="badge-status badge-neutral small mb-1">Pre-Screening Gatekeeper</span>
+                    <h3 class="h4 fw-bold text-primary mb-0">{{ gatekeeper.title }}</h3>
+                </div>
+            </div>
+
+            <div class="p-3 rounded bg-subtle mb-4 border-start border-3 {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY'] %}border-warning{% else %}border-danger{% endif %}">
+                <p class="text-primary mb-0 fs-6 leading-relaxed">
+                    {{ gatekeeper.message }}
+                </p>
+            </div>
+
+            <!-- Gatekeeper Evidentiary Observations -->
+            {% if gatekeeper.evidence %}
+            <div class="mb-4">
+                <h6 class="text-secondary small fw-bold text-uppercase mb-2">
+                    <i class="fa-solid fa-list-check me-1 text-primary"></i> Evaluation Observations
+                </h6>
+                <div class="list-group list-group-flush rounded border border-secondary-subtle">
+                    {% for item in gatekeeper.evidence %}
+                    <div class="list-group-item bg-transparent text-secondary small py-2 px-3 border-secondary-subtle d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-info text-primary mt-1"></i>
+                        <span>{{ item }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Guidance on Supported IDs -->
+            <div class="p-3 rounded mb-4" style="background-color: var(--bg-panel); border: 1px dashed var(--border-color);">
+                <div class="d-flex align-items-start gap-3">
+                    <i class="fa-solid fa-circle-question text-primary fs-5 mt-1"></i>
+                    <div class="small text-secondary">
+                        <strong class="text-primary d-block mb-1">Supported Identity Documents:</strong>
+                        Please ensure you upload a scan or clear photo of a supported identity document:
+                        <ul class="mb-0 ps-3 mt-1 text-muted">
+                            <li>National Identity Card / Citizen Card</li>
+                            <li>Passport (Information page / MRZ)</li>
+                            <li>Official Driving Licence</li>
+                            <li>Accredited College or University Student ID</li>
+                            <li>Formal Educational / Completion Certificate</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="d-flex flex-wrap gap-3">
+                <a href="{{ url_for('upload') }}" class="btn-electric py-2 px-4">
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Upload Another Document
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn-subtle py-2 px-3">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Return to Dashboard
+                </a>
+            </div>
+
+            <!-- Technical Safe Harbor Notice -->
+            <div class="mt-4 pt-3 border-top border-secondary-subtle text-muted" style="font-size: 0.74rem;">
+                <i class="fa-solid fa-shield-halved me-1"></i>
+                <em><strong>Safety Gatekeeper:</strong> Authenticity risk scoring (0–100) was halted because the file could not be verified as an identity document. Downstream fraud flags were suppressed to prevent false positive risk ratings.</em>
+            </div>
+        </div>
+        {% else %}
+        <!-- 1. RESULT SUMMARY & RISK SCORE CARD -->
         <div class="sec-card mb-4 p-4">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
                 <div>
                     <div class="text-secondary small fw-semibold text-uppercase mb-1">
-                        Preliminary Screening Verdict
+                        Final Screening Classification
                     </div>
                     {% if risk.score <= 25 %}
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge-status badge-genuine fs-5 px-3 py-2">
                                 <i class="fa-solid fa-circle-check"></i> LIKELY GENUINE
                             </span>
-                            <span class="small text-muted d-none d-sm-inline">(Likely Genuine)</span>
+                            <span class="small text-muted d-none d-sm-inline">(Low Risk: 0–25)</span>
                         </div>
                     {% elif risk.score <= 55 %}
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge-status badge-review fs-5 px-3 py-2">
                                 <i class="fa-solid fa-circle-exclamation"></i> REQUIRES FURTHER VERIFICATION
                             </span>
-                            <span class="small text-muted d-none d-sm-inline">(Requires Further Verification)</span>
+                            <span class="small text-muted d-none d-sm-inline">(Medium Risk: 26–55)</span>
                         </div>
                     {% else %}
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge-status badge-suspicious fs-5 px-3 py-2">
                                 <i class="fa-solid fa-triangle-exclamation"></i> SUSPICIOUS
                             </span>
-                            <span class="small text-muted d-none d-sm-inline">(Suspicious)</span>
+                            <span class="small text-muted d-none d-sm-inline">(High Risk: 56–100)</span>
                         </div>
                     {% endif %}
+                    <div class="small text-secondary mt-2">
+                        <em>{{ risk.summary_verdict }}</em>
+                    </div>
                 </div>
 
                 <div class="text-end">
@@ -182,22 +317,21 @@
                 </div>
             </div>
 
-            <!-- Simple Risk Indicator (LOW RISK -------- REVIEW -------- HIGH RISK) -->
-            <div class="mt-4 pt-2 border-top">
+            <!-- Calibrated 3-Segment Risk Track -->
+            <div class="mt-4 pt-2 border-top border-secondary-subtle">
                 <div class="d-flex justify-content-between small text-secondary fw-semibold mb-2">
                     <span class="{% if risk.score <= 25 %}text-success fw-bold{% endif %}">LOW RISK (0–25)</span>
                     <span class="{% if 26 <= risk.score <= 55 %}text-warning fw-bold{% endif %}">REVIEW (26–55)</span>
                     <span class="{% if risk.score >= 56 %}text-danger fw-bold{% endif %}">HIGH RISK (56–100)</span>
                 </div>
 
-                <!-- 3-Segment Risk Track -->
                 <div class="risk-indicator-bar-wrapper mb-2 position-relative">
                     <div class="risk-indicator-track">
                         <div class="risk-segment segment-low" title="Low Risk Range (0–25)"></div>
                         <div class="risk-segment segment-med" title="Review Range (26–55)"></div>
                         <div class="risk-segment segment-high" title="High Risk Range (56–100)"></div>
                     </div>
-                    <!-- Indicator Pointer -->
+                    <!-- Indicator Pin -->
                     <div class="risk-indicator-marker" style="left: {{ risk.score }}%;" title="Current Score: {{ risk.score }}/100">
                         <div class="risk-indicator-pin" style="background-color: {{ risk.color_code }};"></div>
                     </div>
@@ -212,71 +346,14 @@
             </div>
         </div>
 
-        <!-- 2. "WHY THIS RESULT?" SECTION -->
+        <!-- 2. SECURITY CHECKPOINTS (8 Independent Checks) -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-circle-question text-teal"></i>
-                    Why Was This Document Classified This Way?
-                </div>
-                <span class="badge-status badge-neutral">Explainable Assessment</span>
-            </div>
-
-            <div class="p-3 rounded bg-subtle border mb-3">
-                <div class="fw-medium text-dark mb-2" style="font-size: 0.95rem; line-height: 1.45;">
-                    {{ why_this_result }}
-                </div>
-                <div class="small text-secondary">
-                    Classification is synthesized across multiple independent indicators without relying on a single checkpoint.
-                </div>
-            </div>
-
-            {% if risk.attention_indicators %}
-            <div class="mb-3">
-                <div class="small fw-semibold text-dark mb-2">
-                    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Attention &amp; Inconsistency Factors:
-                </div>
-                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
-                    {% for item in risk.attention_indicators %}
-                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle border">
-                        <i class="fa-solid fa-circle-dot text-warning mt-1"></i>
-                        <span class="text-secondary">{{ item }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            {% if risk.positive_indicators %}
-            <div class="mb-3">
-                <div class="small fw-semibold text-dark mb-2">
-                    <i class="fa-solid fa-circle-check text-success me-1"></i> Verified Positive Observations:
-                </div>
-                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
-                    {% for item in risk.positive_indicators %}
-                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle border">
-                        <i class="fa-solid fa-check text-success mt-1"></i>
-                        <span class="text-secondary">{{ item }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <div class="small text-muted p-2 rounded bg-light border" style="font-size: 0.78rem;">
-                <i class="fa-solid fa-circle-info text-teal me-1"></i>
-                <strong>Notice:</strong> This automated preliminary screening does not claim legal or definitive proof of document authenticity or fraud.
-            </div>
-        </div>
-
-        <!-- 3. SECURITY CHECKS (7 Checks) -->
-        <div class="sec-card mb-4">
-            <div class="sec-card-header">
-                <div class="sec-card-title">
-                    <i class="fa-solid fa-shield-halved text-teal"></i>
+                    <i class="fa-solid fa-shield-halved"></i>
                     Security Checks
                 </div>
-                <span class="small text-muted">7 Independent Checkpoints</span>
+                <span class="small text-muted">8 Independent Checkpoints</span>
             </div>
 
             <div class="table-responsive">
@@ -291,26 +368,30 @@
                     <tbody>
                         {% for chk in security_checks %}
                         <tr>
-                            <td class="fw-semibold text-dark small">
-                                <i class="{{ chk.icon }} text-teal me-1"></i>
+                            <td class="fw-semibold text-primary small">
+                                <i class="{{ chk.icon }} text-primary me-1"></i>
                                 {{ chk.name }}
                             </td>
                             <td>
-                                {% if chk.status == 'PASSED' %}
+                                {% if chk.status == 'Passed' %}
                                     <span class="badge-status badge-genuine py-1 px-2 small">
                                         <i class="fa-solid fa-check"></i> Passed
                                     </span>
-                                {% elif chk.status == 'WARNING' %}
+                                {% elif chk.status in ['Not Verified', 'Warning'] %}
                                     <span class="badge-status badge-review py-1 px-2 small">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> Warning
+                                        <i class="fa-solid fa-circle-question"></i> Not Verified
                                     </span>
-                                {% elif chk.status == 'NOT VERIFIED' %}
+                                {% elif chk.status == 'Unable to Check' %}
                                     <span class="badge-status badge-review py-1 px-2 small">
-                                        <i class="fa-solid fa-circle-info"></i> Not Verified
+                                        <i class="fa-solid fa-ban"></i> Unable to Check
+                                    </span>
+                                {% elif chk.status == 'Not Checked' %}
+                                    <span class="badge-status badge-neutral py-1 px-2 small">
+                                        <i class="fa-solid fa-minus"></i> Not Checked
                                     </span>
                                 {% else %}
                                     <span class="badge-status badge-suspicious py-1 px-2 small">
-                                        <i class="fa-solid fa-xmark"></i> Flagged
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Flagged
                                     </span>
                                 {% endif %}
                             </td>
@@ -324,62 +405,103 @@
             </div>
         </div>
 
-        <!-- 4. EXTRACTED DOCUMENT INFORMATION -->
+        <!-- 3. EXPLAINABLE RISK ASSESSMENT -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-address-card text-teal"></i>
-                    Extracted Document Information
+                    <i class="fa-solid fa-circle-question"></i>
+                    Explainable Risk Assessment
                 </div>
-                <span class="small text-muted">Field-Level Extraction</span>
+                <span class="badge-status badge-neutral">Transparent AI Logic</span>
             </div>
 
-            <div class="table-responsive">
-                <table class="sec-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Field Name</th>
-                            <th style="width: 45%;">Extracted Value</th>
-                            <th style="width: 25%;">Validation Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for f in extracted_fields %}
-                        <tr>
-                            <td class="fw-medium text-secondary small">{{ f.field }}</td>
-                            <td class="fw-semibold text-dark">
-                                {% if f.field == 'Document Number' and f.value != 'Not detected' %}
-                                    <span class="code-mono">{{ f.value }}</span>
-                                {% else %}
-                                    {{ f.value }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if f.is_valid %}
-                                    <span class="badge-status badge-genuine py-1 px-2 small">
-                                        <i class="fa-solid fa-check"></i> {{ f.status }}
-                                    </span>
-                                {% else %}
-                                    <span class="badge-status badge-review py-1 px-2 small">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> {{ f.status }}
-                                    </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Narrative Result Summary -->
+            <div class="p-3 rounded bg-subtle mb-3">
+                <div class="small fw-bold text-uppercase text-secondary mb-1">Why Was This Document Classified This Way?</div>
+                <div class="text-primary mb-2" style="font-size: 0.93rem; line-height: 1.45;">
+                    {{ why_this_result }}
+                </div>
+                <div class="small text-muted">
+                    Assessment is synthesized across 8 multi-factor checkpoints without depending on a single opaque model.
+                </div>
+            </div>
+
+            <!-- Why Was This Document Flagged? -->
+            {% if why_flagged %}
+            <div class="mb-3">
+                <div class="small fw-semibold text-primary mb-2">
+                    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Why Was This Document Flagged?
+                </div>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    {% for item in why_flagged %}
+                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle">
+                        <i class="fa-solid fa-circle-dot text-danger mt-1"></i>
+                        <span class="text-secondary">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Evidence Supporting Flagged Checks -->
+            {% if evidence %}
+            <div class="mb-3">
+                <div class="small fw-semibold text-primary mb-2">
+                    <i class="fa-solid fa-microscope text-primary me-1"></i> Evidence Supporting Flagged Checks:
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    {% for chk_name, ev_desc in evidence.items() %}
+                    <div class="p-2 rounded bg-subtle small">
+                        <strong class="text-primary d-block">{{ chk_name }}:</strong>
+                        <span class="text-secondary">{{ ev_desc }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Missing or Uncertain Information -->
+            {% if missing_or_uncertain %}
+            <div class="mb-3">
+                <div class="small fw-semibold text-primary mb-2">
+                    <i class="fa-solid fa-circle-question text-warning me-1"></i> Missing or Uncertain Information:
+                </div>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    {% for item in missing_or_uncertain %}
+                    <li class="d-flex align-items-start gap-2 small p-2 rounded bg-subtle">
+                        <i class="fa-solid fa-question text-warning mt-1"></i>
+                        <span class="text-secondary">{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Suggested Next Verification Step -->
+            <div class="p-3 rounded bg-subtle border-start border-3 border-primary mb-3">
+                <div class="small fw-bold text-uppercase text-secondary mb-1">
+                    <i class="fa-solid fa-clipboard-check text-primary me-1"></i> Suggested Next Verification Step
+                </div>
+                <div class="small text-primary">
+                    {{ suggested_action }}
+                </div>
+            </div>
+
+            <!-- Caution Notice -->
+            <div class="small text-muted p-2 rounded bg-subtle" style="font-size: 0.76rem;">
+                <i class="fa-solid fa-shield text-primary me-1"></i>
+                <strong>Notice:</strong> This automated preliminary screening does not claim definitive proof of document authenticity or fraud.
             </div>
         </div>
 
-        <!-- 5. RISK BREAKDOWN -->
+        <!-- 4. RISK BREAKDOWN TABLE -->
         <div class="sec-card mb-4">
             <div class="sec-card-header">
                 <div class="sec-card-title">
-                    <i class="fa-solid fa-chart-pie text-teal"></i>
+                    <i class="fa-solid fa-chart-pie"></i>
                     Risk Breakdown
                 </div>
-                <span class="small fw-semibold text-dark">Total: {{ risk.score }} / 100</span>
+                <span class="small fw-semibold text-primary">Total: {{ risk.score }} / 100</span>
             </div>
 
             <div class="table-responsive">
@@ -394,13 +516,13 @@
                         {% for item in contributing_factors %}
                         <tr>
                             <td class="small text-secondary">{{ item.name }}</td>
-                            <td class="text-end fw-semibold {% if item.penalty > 0 %}text-warning-emphasis{% else %}text-muted{% endif %}">
+                            <td class="text-end fw-semibold {% if item.penalty > 0 %}text-warning{% else %}text-muted{% endif %}">
                                 {% if item.penalty > 0 %}+{{ item.penalty }}{% else %}+0{% endif %}
                             </td>
                         </tr>
                         {% endfor %}
-                        <tr class="table-light">
-                            <td class="fw-bold text-dark text-uppercase small">Total Risk Score</td>
+                        <tr>
+                            <td class="fw-bold text-primary text-uppercase small">Total Risk Score</td>
                             <td class="text-end fw-bold fs-6" style="color: {{ risk.color_code }};">
                                 {{ risk.score }} / 100
                             </td>
@@ -410,38 +532,39 @@
             </div>
         </div>
 
-        <!-- 6. OPTIONAL TECHNICAL DIAGNOSTICS ACCORDION -->
+        <!-- 5. TECHNICAL DIAGNOSTICS ACCORDION -->
         <div class="sec-card mb-0">
             <div class="accordion accordion-flush" id="techAccordion">
-                <div class="accordion-item border-0">
+                <div class="accordion-item bg-transparent border-0">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed px-0 py-1 bg-transparent text-secondary small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTechData">
-                            <i class="fa-solid fa-sliders text-teal me-2"></i> Technical Diagnostics &amp; Raw OCR Stream
+                            <i class="fa-solid fa-sliders text-primary me-2"></i> Technical Diagnostics &amp; Raw OCR Stream
                         </button>
                     </h2>
                     <div id="collapseTechData" class="accordion-collapse collapse">
                         <div class="accordion-body px-0 pb-0 pt-3">
                             <div class="row g-2 small mb-3">
                                 <div class="col-sm-6">
-                                    <div class="p-2 rounded bg-subtle border">
+                                    <div class="p-2 rounded bg-subtle">
                                         <div class="text-muted" style="font-size: 0.72rem;">BLUR VARIANCE (LAPLACIAN)</div>
                                         <strong class="code-mono">{{ image_analysis.blur_score or 0.0 }}</strong>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
-                                    <div class="p-2 rounded bg-subtle border">
+                                    <div class="p-2 rounded bg-subtle">
                                         <div class="text-muted" style="font-size: 0.72rem;">ELA DISPARITY PEAK</div>
                                         <strong class="code-mono">{{ image_analysis.ela_diff_peak or 0.0 }}</strong>
                                     </div>
                                 </div>
                             </div>
                             <div class="small text-muted mb-1">Optical Text Stream:</div>
-                            <pre class="p-2 rounded bg-subtle border text-secondary" style="white-space: pre-wrap; font-size: 0.75rem; max-height: 120px; overflow-y: auto;">{{ ocr.raw_text or 'No raw text stream captured.' }}</pre>
+                            <pre class="p-2 rounded bg-subtle text-secondary" style="white-space: pre-wrap; font-size: 0.75rem; max-height: 120px; overflow-y: auto;">{{ ocr.raw_text or 'No raw text stream captured.' }}</pre>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
