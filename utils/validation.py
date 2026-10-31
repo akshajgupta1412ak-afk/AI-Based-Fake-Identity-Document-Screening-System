@@ -38,6 +38,14 @@ def validate_document_data(ocr_fields, selected_doc_type):
     # 1. DOCUMENT COMPLETENESS CHECK
     # Expected: Name, Document Number, DOB, Issue Date, Expiry Date
     # =============================================================
+    raw_txt = ocr_fields.get('raw_text', '')
+    is_lifetime_id = (
+        selected_doc_type in ["ID Card", "Certificate", "College ID"] or
+        bool(re.search(r'\b\d{4}\s\d{4}\s\d{4}\b', doc_num)) or
+        bool(re.search(r'\b[A-Z]{5}\d{4}[A-Z]\b', doc_num)) or
+        bool(re.search(r'\b(?:aadha+[a-z]*|uidai|pan|income\s*tax|election|voter)\b', raw_txt, re.IGNORECASE))
+    )
+
     missing_fields = []
     if doc_name in ["Not confidently detected", "Not detected", ""]:
         missing_fields.append("Holder Name")
@@ -45,29 +53,31 @@ def validate_document_data(ocr_fields, selected_doc_type):
         missing_fields.append("Document Number")
     if dob_str in ["Not confidently detected", "Not detected", ""]:
         missing_fields.append("Date of Birth")
-    if issue_str in ["Not confidently detected", "Not detected", ""]:
-        missing_fields.append("Issue Date")
-    if exp_str in ["Not confidently detected", "Not detected", ""] and selected_doc_type != "Certificate":
-        missing_fields.append("Expiry Date")
+
+    # Issue Date and Expiry Date are only standard/applicable for travel and licensing documents (Passport, Driving Licence)
+    if not is_lifetime_id:
+        if issue_str in ["Not confidently detected", "Not detected", ""]:
+            missing_fields.append("Issue Date")
+        if exp_str in ["Not confidently detected", "Not detected", ""]:
+            missing_fields.append("Expiry Date")
 
     missing_count = len(missing_fields)
+    total_applicable = 3 if is_lifetime_id else 5
+
+    # Missing OCR fields mean INCOMPLETE / UNVERIFIED, NOT automatically fraudulent.
     if missing_count == 0:
         completeness_status = "PASSED"
         completeness_penalty = 0
         completeness_details = "All expected identity fields are present and detected."
-    elif missing_count <= 2:
-        completeness_status = "WARNING"
-        completeness_penalty = missing_count * 10  # Moderate evidence: +10 per missing field
-        completeness_details = f"Missing field(s): {', '.join(missing_fields)} not confidently detected."
     else:
-        completeness_status = "FLAGGED"
-        completeness_penalty = 20  # Invalid document structure: +20
-        completeness_details = f"Multiple core fields missing ({missing_count} fields): {', '.join(missing_fields)}."
+        completeness_status = "WARNING"
+        completeness_penalty = min(missing_count * 5, 10)
+        completeness_details = f"Incomplete extraction: {missing_count} expected field(s) unverified ({', '.join(missing_fields)}). Requires secondary verification."
 
     checks.append({
         'name': 'Document Completeness Check',
         'passed': (completeness_status == "PASSED"),
-        'severity': 'high' if completeness_status == "FLAGGED" else ('medium' if completeness_status == "WARNING" else 'low'),
+        'severity': 'medium' if completeness_status == "WARNING" else 'low',
         'details': completeness_details
     })
 
@@ -76,7 +86,7 @@ def validate_document_data(ocr_fields, selected_doc_type):
         'penalty': completeness_penalty,
         'details': completeness_details,
         'missing_fields': missing_fields,
-        'detected_count': 5 - missing_count
+        'detected_count': total_applicable - missing_count
     }
 
     # =============================================================
@@ -175,23 +185,19 @@ def validate_document_data(ocr_fields, selected_doc_type):
     structure_penalty = 0
     structure_details = "Standard document structure: headers, security margins, and information zones align correctly."
 
-    if missing_count >= 3:
-        structure_status = "FLAGGED"
-        structure_penalty = 15
-        structure_details = "Irregular document structure; multiple expected structural zones are absent."
+    if has_strong_inconsistency:
+        structure_status = "WARNING"
+        structure_penalty = 5
+        structure_details = "Document structure displays anomalous or contradictory field values."
     elif missing_count > 0:
         structure_status = "WARNING"
         structure_penalty = 0
-        structure_details = "Minor structural variation: some standard layout fields are missing."
-    elif has_strong_inconsistency:
-        structure_status = "WARNING"
-        structure_penalty = 5
-        structure_details = "Document structure displays anomalous or modified character blocks."
+        structure_details = "Document structure intact; some text fields could not be parsed from scan."
 
     checks.append({
         'name': 'Document Structure Check',
         'passed': (structure_status in ["PASSED", "WARNING"]),
-        'severity': 'high' if structure_status == "FLAGGED" else ('medium' if structure_status == "WARNING" else 'low'),
+        'severity': 'medium' if structure_status == "WARNING" else 'low',
         'details': structure_details
     })
 
@@ -265,11 +271,11 @@ def validate_document_data(ocr_fields, selected_doc_type):
         # Absence of record is NOT evidence of fraud!
         db_status = 'NOT VERIFIED'
         db_check_status = 'NOT VERIFIED'
-        db_penalty = 5  # Moderate evidence: Database record unavailable (+5)
+        db_penalty = 0  # Unregistered document in local demo database does not add fraud points
         if clean_num:
-            db_details = f"Not Available: Document ID '{doc_num}' is unregistered in local reference registry. Further verification recommended."
+            db_details = f"Unregistered: Document ID '{doc_num}' is not in local sample database. (Absence of record in demo database does not indicate fraud; standard secondary verification recommended)."
         else:
-            db_details = "Not Available: Document number could not be matched against local reference registry."
+            db_details = "Unregistered: Document number could not be matched against local sample database."
 
     checks.append({
         'name': 'Database Verification Check',

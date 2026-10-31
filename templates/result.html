@@ -202,7 +202,7 @@
              ========================================================= -->
         <div class="sec-card mb-4 p-4 border border-warning-subtle">
             <div class="d-flex align-items-center gap-3 mb-3">
-                {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY'] %}
+                {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE'] %}
                     <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background-color: rgba(251, 191, 36, 0.15); width: 56px; height: 56px;">
                         <i class="fa-solid fa-eye-slash text-warning fs-3"></i>
                     </div>
@@ -217,7 +217,7 @@
                 </div>
             </div>
 
-            <div class="p-3 rounded bg-subtle mb-4 border-start border-3 {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY'] %}border-warning{% else %}border-danger{% endif %}">
+            <div class="p-3 rounded bg-subtle mb-4 border-start border-3 {% if gatekeeper.status in ['UNREADABLE', 'UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE'] %}border-warning{% else %}border-danger{% endif %}">
                 <p class="text-primary mb-0 fs-6 leading-relaxed">
                     {{ gatekeeper.message }}
                 </p>

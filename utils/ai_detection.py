@@ -114,13 +114,6 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
             if noise_scores:
                 avg_noise = float(np.mean(noise_scores))
                 metrics['diffusion_noise_score'] = round(avg_noise, 2)
-                # In digital vector cards, flat patches have near zero noise (< 1.5).
-                # Diffusion-generated synthetic cards exhibit persistent fine-grain micro-texture (8.0 - 28.0)
-                # without physical print dot patterns.
-                if 12.0 <= avg_noise <= 35.0:
-                    indicators.append(
-                        f"Frequency Analysis: High-frequency residual noise in flat card regions ({metrics['diffusion_noise_score']}), consistent with diffusion synthesis."
-                    )
 
         # -------------------------------------------------------------
         # 3. TYPOGRAPHY & BASELINE ALIGNMENT CHECK
@@ -128,19 +121,16 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
         # AI images show character baseline wobble and floating glyphs.
         # -------------------------------------------------------------
         try:
-            # Threshold to isolate text blocks
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
             contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             char_boxes = []
             for cnt in contours:
                 bx, by, bw, bh = cv2.boundingRect(cnt)
-                # Filter typical character box sizes
                 if 6 <= bw <= 45 and 10 <= bh <= 55 and bw * bh < 1800:
                     char_boxes.append((bx, by, bw, bh))
 
             if len(char_boxes) >= 15:
-                # Group characters by rough horizontal line (similar y coordinates within 12px)
                 char_boxes.sort(key=lambda b: (b[1] // 14, b[0]))
                 lines = []
                 current_line = []
@@ -157,7 +147,6 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
                 if len(current_line) >= 5:
                     lines.append(current_line)
 
-                # Check baseline variance across lines
                 line_drifts = []
                 for ln in lines:
                     bottoms = [b[1] + b[3] for b in ln]
@@ -167,8 +156,6 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
                 if line_drifts:
                     avg_drift = float(np.mean(line_drifts))
                     metrics['baseline_drift_std'] = round(avg_drift, 2)
-                    # Natural digital cards have baseline std < 1.2 px
-                    # AI-hallucinated text has high baseline wobble (> 3.5 px)
                     if avg_drift > 3.8:
                         indicators.append(
                             f"Typography Inconsistency: Text baseline alignment drift detected (std {metrics['baseline_drift_std']}px), indicating AI-rendered text."
@@ -178,7 +165,6 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
 
         # -------------------------------------------------------------
         # 4. PHOTO & CARD INTEGRATION DISPARITY
-        # Checks whether the photo box has unnatural edge bleeding or floating borders
         # -------------------------------------------------------------
         try:
             left_roi = cv_img[int(h * 0.15):int(h * 0.75), int(w * 0.05):int(w * 0.40)]
@@ -201,9 +187,6 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
                 color_var = float(np.var(roi_hsv[:, :, 0]))
                 if color_var > 800 and not has_clean_rect_frame:
                     metrics['photo_integration_anomaly'] = True
-                    indicators.append(
-                        "Visual Integration: Portrait element lacks defined security framing / displays irregular edge blending."
-                    )
         except Exception:
             pass
 
@@ -226,28 +209,75 @@ def detect_ai_synthetic_indicators(image_path, ocr_data=None):
                 indicators.append(
                     f"Text Synthesis Artifacts: {hallucinatory_tokens} pseudo-word tokens / repetitive character motifs detected."
                 )
-
     # -------------------------------------------------------------
     # CLASSIFY OVERALL AI / SYNTHETIC STATUS
+    # Strict rule: Normal image compression, resizing, sensor noise,
+    # or borderless portrait framing must NOT independently establish AI generation.
     # -------------------------------------------------------------
-    count = len(indicators)
-    if count >= 2 or metrics['metadata_ai_flag']:
+    strong_indicators = []
+    contextual_notes = []
+
+    # 1. Metadata check (strong)
+    if metrics['metadata_ai_flag']:
+        strong_indicators.extend([ind for ind in indicators if "Metadata" in ind or "EXIF" in ind])
+
+    # 2. Hallucinatory / pseudo-word tokens (strong)
+    if metrics['hallucinatory_token_count'] >= 2:
+        strong_indicators.append(
+            f"Text Synthesis Artifacts: {metrics['hallucinatory_token_count']} pseudo-word tokens / repetitive character motifs detected."
+        )
+
+    # 3. Typography baseline drift (strong)
+    if metrics.get('baseline_drift_std', 0.0) > 3.8:
+        strong_indicators.append(
+            f"Typography Inconsistency: Text baseline alignment drift detected (std {metrics['baseline_drift_std']}px), indicating AI-rendered text."
+        )
+
+    # 4. Contextual signals (noise & portrait framing)
+    noise_score = metrics.get('diffusion_noise_score', 0.0)
+    if noise_score >= 45.0:
+        strong_indicators.append(
+            f"Frequency Analysis: Extreme high-frequency residual noise in flat card regions ({noise_score})."
+        )
+    elif 12.0 <= noise_score < 45.0:
+        if strong_indicators:
+            contextual_notes.append(
+                f"Frequency Analysis: High-frequency residual noise ({noise_score}) corroborates generative synthesis."
+            )
+        else:
+            contextual_notes.append(
+                f"Frequency Analysis: Optical noise index ({noise_score}) consistent with standard camera sensor / image compression."
+            )
+
+    if metrics.get('photo_integration_anomaly'):
+        if strong_indicators:
+            contextual_notes.append(
+                "Visual Integration: Portrait element displays diffuse edge blending consistent with model synthesis."
+            )
+        else:
+            contextual_notes.append(
+                "Visual Integration: Borderless portrait layout conforms to standard physical ID design."
+            )
+
+    all_reported = strong_indicators + (contextual_notes if strong_indicators else [])
+
+    if len(strong_indicators) >= 2 or metrics['metadata_ai_flag']:
         status = 'FLAGGED'
         risk_penalty = 30
-        details = f"Multiple synthetic/AI generation indicators identified ({count} flags): " + "; ".join(indicators)
-    elif count == 1:
+        details = f"Multiple verified synthetic/AI generation indicators identified ({len(all_reported)} flags): " + "; ".join(all_reported)
+    elif len(strong_indicators) == 1:
         status = 'WARNING'
         risk_penalty = 10
-        details = f"Single synthetic anomaly observed: {indicators[0]}"
+        details = f"Synthetic anomaly observed: {strong_indicators[0]}"
     else:
         status = 'PASSED'
         risk_penalty = 0
-        details = "No significant synthetic or AI-generation indicators detected."
+        details = "No significant synthetic or AI-generation indicators detected. Natural document composition."
 
     return {
         'status': status,
-        'indicator_count': count,
-        'indicators': indicators,
+        'indicator_count': len(all_reported),
+        'indicators': all_reported,
         'risk_penalty': risk_penalty,
         'details': details,
         'metrics': metrics,

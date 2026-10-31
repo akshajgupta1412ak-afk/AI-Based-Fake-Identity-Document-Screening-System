@@ -127,11 +127,11 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
     # GATEKEEPER: Strict Identity-Document Type Validation (runs BEFORE authenticity scoring)
     gatekeeper = validate_identity_document(ocr_data, analysis_img_path, declared_type=document_type, quality_res=quality_res)
 
-    if not gatekeeper.get('is_valid') or gatekeeper.get('status') in ['NOT_AN_ID', 'UNABLE_TO_IDENTIFY', 'UNREADABLE']:
+    if not gatekeeper.get('is_valid') or gatekeeper.get('status') in ['NOT_AN_ID', 'UNABLE_TO_IDENTIFY', 'UNREADABLE', 'UNABLE_TO_VERIFY_TYPE']:
         # Gatekeeper halted downstream scoring
         verification_code = f"VER-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
         status_label = gatekeeper['title']
-        result_code = 'UNABLE_TO_IDENTIFY' if gatekeeper['status'] in ['UNABLE_TO_IDENTIFY', 'UNREADABLE'] else 'NO_ID_DETECTED'
+        result_code = 'UNABLE_TO_VERIFY_TYPE' if gatekeeper['status'] in ['UNABLE_TO_VERIFY_TYPE', 'UNABLE_TO_IDENTIFY', 'UNREADABLE'] else 'NO_ID_DETECTED'
         
         meta_payload = {
             'gatekeeper': gatekeeper,
@@ -149,12 +149,14 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
             'six_checks': [],
             'extracted_fields': [],
             'ai_detection': {'status': 'SKIPPED', 'summary': 'Downstream forensics halted by document classification gatekeeper.'},
-            'suggested_action': 'Please upload a clear scan or photograph of a supported identity document (ID Card, Passport, Driving Licence, College ID, or Certificate).',
+            'suggested_action': ('Please upload a clearer, properly oriented image of the identity document with legible text.'
+                                if result_code == 'UNABLE_TO_VERIFY_TYPE' else
+                                'Please upload a clear scan or photograph of a supported identity document (ID Card, Passport, Driving Licence, College ID, or Certificate).'),
             'audit_trail': [
                 {'step': 1, 'name': 'Document Ingestion', 'status': 'Completed', 'icon': 'fa-solid fa-cloud-arrow-up'},
                 {'step': 2, 'name': 'SHA-256 Digest Registered', 'status': 'Completed', 'icon': 'fa-solid fa-fingerprint'},
                 {'step': 3, 'name': 'Optical Analysis & Quality Check', 'status': 'Completed', 'icon': 'fa-solid fa-image'},
-                {'step': 4, 'name': 'Identity Document Validation', 'status': 'Halted' if result_code == 'NO_ID_DETECTED' else 'Unreadable', 'icon': 'fa-solid fa-shield-halved'}
+                {'step': 4, 'name': 'Identity Document Validation', 'status': 'Halted' if result_code == 'NO_ID_DETECTED' else 'Unverified Type', 'icon': 'fa-solid fa-shield-halved'}
             ]
         }
 
@@ -535,9 +537,9 @@ def result(code):
         if not gatekeeper:
             is_unreadable = record['result'] in ['UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE']
             gatekeeper = {
-                'status': 'UNABLE_TO_IDENTIFY' if is_unreadable else 'NOT_AN_ID',
-                'title': 'Unable to Identify Document' if is_unreadable else 'No Identity Document Detected',
-                'message': ('The uploaded file may contain an identity document, but there is insufficient readable information to identify it confidently. Please upload a clearer image or PDF.'
+                'status': 'UNABLE_TO_VERIFY_TYPE' if is_unreadable else 'NOT_AN_ID',
+                'title': 'Unable to Verify Document Type' if is_unreadable else 'No Identity Document Detected',
+                'message': ('The image quality is insufficient, blurry, low-resolution, rotated, or text could not be read clearly to verify the document type. Please upload a clear, properly oriented image of the identity document.'
                             if is_unreadable else
                             'The uploaded file does not appear to contain a supported identity document. Please upload a clear image or PDF of an identity document and try again.'),
                 'evidence': raw_meta.get('reasons', []) if isinstance(raw_meta, dict) else []

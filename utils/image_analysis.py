@@ -89,6 +89,10 @@ def check_image_quality(image_path):
                 except Exception:
                     lap_var = 100.0
                 quality['blur_score'] = lap_var
+                quality['sharpness'] = lap_var
+                quality['is_blurry'] = (lap_var < 45.0)
+                quality['is_severe_blur'] = (lap_var < 15.0)
+                quality['is_low_res'] = (w < 240 or h < 160 or (w * h) < 40000)
 
                 if w < 240 or h < 160 or (w * h) < 40000:
                     quality['adequate'] = False
@@ -163,7 +167,8 @@ def check_image_quality(image_path):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # 1. Resolution Check (Minimum usable document area)
-    if w < 240 or h < 160 or (w * h) < 40000:
+    quality['is_low_res'] = (w < 240 or h < 160 or (w * h) < 40000)
+    if quality['is_low_res']:
         quality['adequate'] = False
         quality['issues'].append(f"Image resolution too low ({w}x{h} px). Minimum required is 240x160 px.")
         quality['checks']['resolution'] = {'passed': False, 'details': f'Low resolution ({w}x{h} px)'}
@@ -173,6 +178,9 @@ def check_image_quality(image_path):
     # 2. Blur / Sharpness Check
     lap_var = round(float(cv2.Laplacian(gray, cv2.CV_64F).var()), 2)
     quality['blur_score'] = lap_var
+    quality['sharpness'] = lap_var
+    quality['is_blurry'] = (lap_var < 45.0)
+    quality['is_severe_blur'] = (lap_var < 15.0)
     if lap_var < 15.0:
         quality['adequate'] = False
         quality['issues'].append(f"Extreme optical blur detected (sharpness index: {lap_var}). Text may be unreadable.")
@@ -218,6 +226,60 @@ def check_image_quality(image_path):
         quality['message'] = 'Image quality is insufficient for reliable screening. Please upload a clearer image.'
 
     return quality
+
+
+def detect_card_geometry(image_path):
+    """
+    Analyzes physical image geometry to determine if it plausibly resembles a document card or sheet:
+    - Landscape card aspect ratio (~1.2 - 1.85, ISO 7810 ID-1 standard ~1.58)
+    - Portrait card/passport spread aspect ratio (~0.55 - 0.85)
+    - Rectangular document boundary contours
+    """
+    res = {
+        'is_card_aspect': False,
+        'is_portrait_aspect': False,
+        'has_rectangular_contour': False,
+        'aspect_ratio': 1.0,
+        'is_plausible_card': False
+    }
+    if not image_path or not os.path.exists(image_path) or image_path.lower().endswith('.pdf'):
+        return res
+
+    try:
+        with Image.open(image_path) as img:
+            w, h = img.size
+            if h > 0:
+                aspect = round(float(w) / float(h), 2)
+                res['aspect_ratio'] = aspect
+                if 1.15 <= aspect <= 1.95:
+                    res['is_card_aspect'] = True
+                elif 0.50 <= aspect <= 0.88:
+                    res['is_portrait_aspect'] = True
+    except Exception:
+        pass
+
+    if HAS_CV2 and cv2 is not None:
+        try:
+            cv_img = cv2.imread(image_path)
+            if cv_img is not None:
+                gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+                blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+                edged = cv2.Canny(blurred, 50, 150)
+                contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                total_area = float(gray.shape[0] * gray.shape[1])
+                for cnt in contours:
+                    area = cv2.contourArea(cnt)
+                    if area > (0.15 * total_area):
+                        peri = cv2.arcLength(cnt, True)
+                        approx = cv2.approxPolyDP(cnt, 0.04 * peri, True)
+                        if len(approx) == 4:
+                            res['has_rectangular_contour'] = True
+                            break
+        except Exception:
+            pass
+
+    res['is_plausible_card'] = res['is_card_aspect'] or res['is_portrait_aspect'] or res['has_rectangular_contour']
+    return res
 
 
 def screen_image_tampering(image_path):

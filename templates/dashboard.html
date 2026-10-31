@@ -271,7 +271,7 @@
                                 {% if record.result == 'NO_ID_DETECTED' %}
                                     <span class="badge-status badge-neutral"><i class="fa-solid fa-ban text-danger me-1"></i> Rejected (Not an ID)</span>
                                 {% elif record.result in ['UNABLE_TO_IDENTIFY', 'UNABLE_TO_VERIFY_TYPE'] %}
-                                    <span class="badge-status badge-neutral"><i class="fa-solid fa-eye-slash text-warning me-1"></i> Unreadable Scan</span>
+                                    <span class="badge-status badge-neutral"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Unable to Verify</span>
                                 {% elif 'GENUINE' in record.result %}
                                     <span class="badge-status badge-genuine">Likely Genuine</span>
                                 {% elif 'VERIFICATION' in record.result %}

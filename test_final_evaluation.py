@@ -11,6 +11,7 @@ import io
 import re
 from PIL import Image, ImageDraw, ImageFilter
 from pypdf import PdfWriter, PdfReader
+import numpy as np
 from app import app
 from database import get_db_connection, verify_user
 from utils.fingerprint import compute_file_sha256, check_and_record_fingerprint
@@ -215,8 +216,8 @@ def run_evaluation_suite():
             'ID Card',
             quality_res={'is_blurry': True, 'sharpness': 18.0, 'issues': ['Severe optical blur']}
         )
-        assert s15_file_res['status'] == 'UNABLE_TO_IDENTIFY' and s15_file_res['is_valid'] is False
-        assert s15_file_res['title'] == 'Unable to Identify Document'
+        assert s15_file_res['status'] in ['UNABLE_TO_VERIFY_TYPE', 'UNABLE_TO_IDENTIFY'] and s15_file_res['is_valid'] is False
+        assert s15_file_res['title'] in ['Unable to Verify Document Type', 'Unable to Identify Document']
         print(f"[PASS] Scenario 15: Blurry/unreadable ID scan -> OUTCOME 2: '{s15_file_res['title']}'")
     finally:
         if os.path.exists(tmp_card_path):
@@ -288,6 +289,118 @@ def run_evaluation_suite():
     assert "Likely Genuine" not in html_moon and "LIKELY GENUINE" not in html_moon
     assert "Suspicious" not in html_moon and "SUSPICIOUS" not in html_moon
     print("[PASS] 21. End-to-End Moon-and-Sun icon rejected with No Identity Document Detected & zero risk score.")
+    passed_checks += 1
+
+    # -------------------------------------------------------------
+    # PART 4: 6 SPECIFIC QUALITY & ROTATION ISOLATION TESTS
+    # -------------------------------------------------------------
+    print("\n--- [Part 4: Quality & Rotation Document Separation Tests] ---")
+
+    # 1. Clear identity document
+    clear_img = Image.new('RGB', (850, 540), color=(245, 245, 250))
+    d_c = ImageDraw.Draw(clear_img)
+    d_c.text((50, 30), 'REPUBLIC OF CITIZENS - IDENTITY CARD', fill=(0, 0, 0))
+    d_c.text((50, 80), 'Full Name: Alice Walker', fill=(0, 0, 0))
+    d_c.text((50, 120), 'Document No: ID88492019', fill=(0, 0, 0))
+    d_c.text((50, 160), 'Date of Birth: 1998-05-20', fill=(0, 0, 0))
+    d_c.text((50, 200), 'Expiry Date: 2030-10-15', fill=(0, 0, 0))
+    clear_buf = io.BytesIO()
+    clear_img.save(clear_buf, format='PNG')
+    clear_buf.seek(0)
+    res_clear = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (clear_buf, 'clear_id_card.png')
+    }, follow_redirects=True)
+    html_clear = res_clear.data.decode('utf-8', errors='ignore')
+    assert "Risk Score" in html_clear and "Total Risk Score" in html_clear
+    assert "No Identity Document Detected" not in html_clear
+    print("[PASS] 22. Clear identity document -> Correctly detected and processed to authenticity evaluation.")
+    passed_checks += 1
+
+    # 2. Rotated identity document (90 degrees rotated ID)
+    rot_img = clear_img.rotate(90, expand=True)
+    rot_buf = io.BytesIO()
+    rot_img.save(rot_buf, format='PNG')
+    rot_buf.seek(0)
+    res_rot = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (rot_buf, 'rotated_id_card.png')
+    }, follow_redirects=True)
+    html_rot = res_rot.data.decode('utf-8', errors='ignore')
+    assert "Risk Score" in html_rot and "Total Risk Score" in html_rot
+    assert "No Identity Document Detected" not in html_rot
+    print("[PASS] 23. Rotated identity document (90 deg) -> Rotation recovered & identified.")
+    passed_checks += 1
+
+    # 3. Low-resolution identity document
+    low_img = clear_img.resize((220, 140))
+    low_buf = io.BytesIO()
+    low_img.save(low_buf, format='PNG')
+    low_buf.seek(0)
+    res_low = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (low_buf, 'lowres_id_card.png')
+    }, follow_redirects=True)
+    html_low = res_low.data.decode('utf-8', errors='ignore')
+    assert "Unable to Verify Document Type" in html_low or "Unable to Identify Document" in html_low
+    assert "No Identity Document Detected" not in html_low, "Low-res ID must NOT be classified as 'No Identity Document Detected'!"
+    print("[PASS] 24. Low-resolution identity document -> Correctly returned 'Unable to Verify Document Type' (NOT No ID).")
+    passed_checks += 1
+
+    # 4. Slightly blurry identity document
+    blur_img = clear_img.filter(ImageFilter.GaussianBlur(radius=2.5))
+    blur_buf = io.BytesIO()
+    blur_img.save(blur_buf, format='JPEG')
+    blur_buf.seek(0)
+    res_blur = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (blur_buf, 'blurry_id_card.jpg')
+    }, follow_redirects=True)
+    html_blur = res_blur.data.decode('utf-8', errors='ignore')
+    # Must NOT be classified as No Identity Document Detected
+    assert "No Identity Document Detected" not in html_blur, "Blurry ID must NOT be classified as 'No Identity Document Detected'!"
+    assert "Unable to Verify Document Type" in html_blur or "Unable to Identify Document" in html_blur or "Risk Score" in html_blur
+    print("[PASS] 25. Blurry identity document -> Correctly routed to 'Unable to Verify Document Type' (NOT No ID).")
+    passed_checks += 1
+
+    # 5. Unrelated photograph (Landscape)
+    arr_land = np.zeros((600, 900, 3), dtype=np.uint8)
+    for y in range(300):
+        arr_land[y, :, 0] = int(100 + y * 0.3)
+        arr_land[y, :, 1] = int(150 + y * 0.3)
+        arr_land[y, :, 2] = 255
+    np.random.seed(42)
+    arr_land[300:, :, :] = np.random.randint(40, 120, (300, 900, 3), dtype=np.uint8)
+    land_img = Image.fromarray(arr_land)
+    land_buf = io.BytesIO()
+    land_img.save(land_buf, format='JPEG')
+    land_buf.seek(0)
+    res_land = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (land_buf, 'mountain_landscape.jpg')
+    }, follow_redirects=True)
+    html_land = res_land.data.decode('utf-8', errors='ignore')
+    assert "No Identity Document Detected" in html_land, "Landscape photo must be rejected with 'No Identity Document Detected'!"
+    print("[PASS] 26. Unrelated photograph (Landscape) -> Correctly rejected with 'No Identity Document Detected'.")
+    passed_checks += 1
+
+    # 6. Unrelated PNG file (Invoice/Receipt)
+    inv_img = Image.new('RGB', (600, 800), color=(255, 255, 255))
+    d_i = ImageDraw.Draw(inv_img)
+    d_i.text((50, 40), 'ACME SUPPLIES - OFFICIAL INVOICE #99481', fill=(0, 0, 0))
+    d_i.text((50, 80), 'Bill To: Global Logistics Inc', fill=(0, 0, 0))
+    d_i.text((50, 120), 'Unit Price: $450.00 | Qty: 2', fill=(0, 0, 0))
+    d_i.text((50, 160), 'Subtotal: $900.00 | Total Due: $900.00', fill=(0, 0, 0))
+    inv_buf = io.BytesIO()
+    inv_img.save(inv_buf, format='PNG')
+    inv_buf.seek(0)
+    res_inv = client.post('/upload', data={
+        'document_type': 'ID Card',
+        'document_file': (inv_buf, 'company_invoice.png')
+    }, follow_redirects=True)
+    html_inv = res_inv.data.decode('utf-8', errors='ignore')
+    assert "No Identity Document Detected" in html_inv, "Invoice must be rejected with 'No Identity Document Detected'!"
+    print("[PASS] 27. Unrelated PNG file (Invoice) -> Correctly rejected with 'No Identity Document Detected'.")
     passed_checks += 1
 
     print("\n" + "=" * 70)

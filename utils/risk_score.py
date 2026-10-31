@@ -128,6 +128,11 @@ def calculate_risk_score(ocr_res, validation_res, image_res, ai_res, fingerprint
     struct_penalty = struct_check.get('penalty', 0)
     combined_struct_penalty = max(comp_penalty, struct_penalty)
 
+    # Deduplicate penalties: If OCR extraction already penalized partial text legibility,
+    # avoid double-counting under Document Structure
+    if ocr_penalty > 0 and combined_struct_penalty > 0:
+        combined_struct_penalty = max(0, combined_struct_penalty - 5)
+
     if raw_comp_status == 'PASSED' and raw_struct_status == 'PASSED':
         struct_status = 'Passed'
         struct_details = "Header, layout hierarchy, security margins, and expected field set conform to document type specification."
@@ -226,8 +231,8 @@ def calculate_risk_score(ocr_res, validation_res, image_res, ai_res, fingerprint
         db_details = "Record not found in Local Demo Registry. (Absence of synthetic demo record does not imply fraudulent origin)."
         attention_indicators.append("Record Match: Document ID not located in Local Demo Registry (unverified).")
         missing_or_uncertain.append("Reference record: Not present in Local Demo Registry.")
-        reasons.append("Record Match: Document not registered in Local Demo Registry (requires secondary verification).")
-        db_contrib = 5
+        reasons.append("Record Match: Document not registered in Local Demo Registry (standard secondary verification recommended).")
+        db_contrib = 0
     else:
         db_status = 'Flagged'
         db_details = f"Local Demo Registry conflict or blacklisted ID: {db_details_raw}"
