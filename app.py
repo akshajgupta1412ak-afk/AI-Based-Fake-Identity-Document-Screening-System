@@ -84,7 +84,7 @@ init_db()
 # CORE SCREENING PIPELINE RUNNER
 # ====================================================================
 
-def run_screening_pipeline(filepath, document_type, filename, analyst_username='Analyst'):
+def run_screening_pipeline(filepath, document_type, filename, analyst_username='Analyst', is_simulated_demo=False):
     """
     Executes the complete document screening pipeline across 8 independent checkpoints:
     1. Cryptographic SHA-256 Fingerprinting & File Integrity
@@ -202,12 +202,45 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
     # 7. Multi-Factor Risk Score Calculation (8 Independent Checkpoints)
     risk_res = calculate_risk_score(ocr_data, validation_res, image_analysis_res, ai_detection_res, fingerprint_res, quality_res)
 
+    # Controlled Demo Mode / Simulation Detection
+    is_simulated = (
+        bool(is_simulated_demo) or
+        ('low_risk' in filename.lower()) or
+        ('demo_low_risk' in filename.lower()) or
+        ('sample_not_valid' in filename.lower()) or
+        ('demo98234' in str(doc_number).lower())
+    )
+
+    final_result_label = risk_res['status_label']
+    summary_verdict = risk_res.get('summary_verdict', '')
+    why_this_result = risk_res.get('why_this_result', '')
+    suggested_action = risk_res.get('suggested_action', '')
+    simulated_demo_notice = ""
+
+    if is_simulated and risk_res['score'] <= 25:
+        final_result_label = "Likely Genuine – Simulated Test Result"
+        summary_verdict = "Likely Genuine – Simulated Test Result (Controlled Demonstration Mode)"
+        why_this_result = (
+            "All required fictional identity fields were successfully extracted, document structure conforms to standard specifications, and no tampering or synthetic anomalies were detected. "
+            "Notice: This is a controlled simulated demonstration using a fictional test fixture labeled 'SAMPLE – NOT VALID' for academic evaluation, and does not represent verified real-world document authenticity."
+        )
+        suggested_action = (
+            "Controlled demonstration scenario completed successfully. In production screening, physical document security features, original issuing authority credentials, and cryptographic signatures must be verified."
+        )
+        simulated_demo_notice = (
+            "This result was generated in controlled demonstration mode using a synthetic test fixture clearly labeled 'SAMPLE – NOT VALID'. "
+            "It demonstrates how a low-risk classification is achieved when all screening checkpoints pass, but does not represent or verify real-world document authenticity."
+        )
+
     # 8. Persist Verification Record in SQLite Database
     verification_code = f"VER-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
     meta_payload = {
         'gatekeeper': gatekeeper,
         'is_gatekeeper_blocked': False,
+        'is_simulated_demo': is_simulated,
+        'simulated_demo_notice': simulated_demo_notice,
+        'status_label': final_result_label,
         'reasons': risk_res.get('reasons', []),
         'positive_indicators': risk_res.get('positive_indicators', []),
         'attention_indicators': risk_res.get('attention_indicators', []),
@@ -218,12 +251,12 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
         'six_checks': risk_res.get('security_checks', []),
         'extracted_fields': validation_res.get('extracted_fields', []),
         'ai_detection': ai_detection_res,
-        'summary_verdict': risk_res.get('summary_verdict', ''),
-        'why_this_result': risk_res.get('why_this_result', ''),
+        'summary_verdict': summary_verdict,
+        'why_this_result': why_this_result,
         'why_flagged': risk_res.get('why_flagged', []),
         'evidence': risk_res.get('evidence', {}),
         'missing_or_uncertain': risk_res.get('missing_or_uncertain', []),
-        'suggested_action': risk_res.get('suggested_action', ''),
+        'suggested_action': suggested_action,
         'audit_trail': risk_res.get('audit_trail', [])
     }
 
@@ -241,7 +274,7 @@ def run_screening_pipeline(filepath, document_type, filename, analyst_username='
         doc_number if doc_number not in ['Not detected', 'Not confidently detected'] else None,
         extracted_name if extracted_name not in ['Not detected', 'Not confidently detected'] else None,
         risk_res['score'],
-        risk_res['status_label'],
+        final_result_label,
         json.dumps(meta_payload),
         json.dumps(risk_res['checks']),
         json.dumps(ocr_data),
@@ -474,7 +507,8 @@ def upload():
                     return redirect(request.url)
 
             analyst = session.get('username', 'Analyst')
-            code = run_screening_pipeline(saved_path, document_type, unique_filename, analyst)
+            is_sim = ('low_risk' in safe_name.lower()) or ('sample_not_valid' in safe_name.lower()) or ('demo_low_risk' in safe_name.lower())
+            code = run_screening_pipeline(saved_path, document_type, unique_filename, analyst, is_simulated_demo=is_sim)
             flash("Document screening complete! Review the detailed assessment dossier below.", "success")
             return redirect(url_for('result', code=code))
         else:
@@ -642,11 +676,27 @@ def result(code):
         else:
             suggested_action = "Manual forensic review recommended. Verify physical document security features, microtext, and issuer credentials."
 
+    is_simulated_demo = False
+    if isinstance(raw_meta, dict):
+        is_simulated_demo = raw_meta.get('is_simulated_demo', False)
+    if not is_simulated_demo:
+        is_simulated_demo = (
+            'Simulated Test Result' in str(record.get('result', '')) or
+            'low_risk' in str(record.get('filename', '')).lower() or
+            'sample_not_valid' in str(record.get('filename', '')).lower() or
+            'DEMO98234' == str(record.get('document_number'))
+        )
+
     risk = {
         'score': score,
         'completeness': completeness,
         'risk_level': risk_level,
-        'status_label': record['result'],
+        'status_label': ("Likely Genuine – Simulated Test Result" if (is_simulated_demo and score <= 25) else record['result']),
+        'is_simulated_demo': is_simulated_demo,
+        'simulated_demo_notice': raw_meta.get('simulated_demo_notice', (
+            "This result was generated in controlled demonstration mode using a synthetic test fixture clearly labeled 'SAMPLE – NOT VALID'. "
+            "It demonstrates how a low-risk classification is achieved when all screening checkpoints pass, but does not represent or verify real-world document authenticity."
+        )) if is_simulated_demo else "",
         'summary_verdict': summary_verdict,
         'why_this_result': why_this_result,
         'why_flagged': why_flagged,
@@ -725,6 +775,17 @@ def report(code):
     checks = json.loads(record['checks_json']) if record.get('checks_json') else []
 
     score = record['risk_score']
+    is_simulated_demo = False
+    if isinstance(raw_meta, dict):
+        is_simulated_demo = raw_meta.get('is_simulated_demo', False)
+    if not is_simulated_demo:
+        is_simulated_demo = (
+            'Simulated Test Result' in str(record.get('result', '')) or
+            'low_risk' in str(record.get('filename', '')).lower() or
+            'sample_not_valid' in str(record.get('filename', '')).lower() or
+            'DEMO98234' == str(record.get('document_number'))
+        )
+
     if score == -1:
         risk_level = "NOT APPLICABLE"
         status_label = raw_meta.get('status_label', record['result'])
@@ -732,7 +793,7 @@ def report(code):
         color_code = "#64748B"
     elif score <= 25:
         risk_level = "LOW RISK"
-        status_label = "LIKELY GENUINE"
+        status_label = "Likely Genuine – Simulated Test Result" if is_simulated_demo else "LIKELY GENUINE"
         badge_class = "badge-genuine"
         color_code = "#059669"
     elif score <= 55:
@@ -831,6 +892,7 @@ def report(code):
         audit_trail=audit_trail,
         ocr_data=ocr_data,
         image_analysis=image_analysis,
+        is_simulated_demo=is_simulated_demo,
         date_generated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
 
@@ -1084,6 +1146,24 @@ def run_quick_demo(test_name):
             'type': 'Driving Licence',
             'label': 'Expired Document (Requires Further Verification)'
         },
+        'low_risk': {
+            'file': 'DEMO_low_risk_sample.png',
+            'type': 'ID Card',
+            'label': 'Controlled Low-Risk Demo (Simulated Test Result)',
+            'is_simulated_demo': True
+        },
+        'simulated_genuine': {
+            'file': 'DEMO_low_risk_sample.png',
+            'type': 'ID Card',
+            'label': 'Controlled Low-Risk Demo (Simulated Test Result)',
+            'is_simulated_demo': True
+        },
+        'demo_low_risk': {
+            'file': 'DEMO_low_risk_sample.png',
+            'type': 'ID Card',
+            'label': 'Controlled Low-Risk Demo (Simulated Test Result)',
+            'is_simulated_demo': True
+        },
         # Legacy aliases
         'valid': {
             'file': 'TEST1_clean_sample.png',
@@ -1118,8 +1198,12 @@ def run_quick_demo(test_name):
     shutil.copyfile(src_path, dest_path)
 
     # Execute full pipeline
-    code = run_screening_pipeline(dest_path, demo_cfg['type'], dest_filename, session.get('username', 'Demo-Analyst'))
-    flash(f"Demo Test '{test_name.upper()}' screened successfully! Review assessment dossier below.", "info")
+    is_sim = demo_cfg.get('is_simulated_demo', False)
+    code = run_screening_pipeline(dest_path, demo_cfg['type'], dest_filename, session.get('username', 'Demo-Analyst'), is_simulated_demo=is_sim)
+    if is_sim:
+        flash("Controlled Demo Scenario 'LOW_RISK' screened successfully! Displaying Simulated Test Result.", "info")
+    else:
+        flash(f"Demo Test '{test_name.upper()}' screened successfully! Review assessment dossier below.", "info")
     return redirect(url_for('result', code=code))
 
 

@@ -159,13 +159,22 @@
                         <span class="badge-status badge-review small py-1">Requires Verification</span>
                     </a>
                 </div>
-                <div class="col-12">
+                <div class="col-md-6">
                     <a href="{{ url_for('run_quick_demo', test_name='expired') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
                         <div>
                             <div class="small fw-semibold text-primary"><i class="fa-solid fa-calendar-xmark text-warning me-1"></i> Expired Document</div>
                             <div class="text-muted" style="font-size: 0.72rem;">Valid registry record, expired validity date</div>
                         </div>
                         <span class="badge-status badge-review small py-1">Requires Verification</span>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="{{ url_for('run_quick_demo', test_name='low_risk') }}" class="d-flex align-items-center justify-content-between p-2 rounded bg-subtle text-decoration-none">
+                        <div>
+                            <div class="small fw-semibold text-primary"><i class="fa-solid fa-shield-check text-success me-1"></i> Low-Risk Demo</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Controlled fixture, "SAMPLE – NOT VALID"</div>
+                        </div>
+                        <span class="badge-status badge-genuine small py-1">Likely Genuine (Simulated)</span>
                     </a>
                 </div>
             </div>

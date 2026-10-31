@@ -228,6 +228,149 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {}
         }, 6000);
     });
+
+    // -------------------------------------------------------------
+    // 5. Dedicated Toggle Switch: Blueprint & Procedure Dossier
+    // -------------------------------------------------------------
+    const blueprintSwitch = document.getElementById('blueprint-toggle-switch');
+    const blueprintPanel = document.getElementById('blueprint-panel');
+    const blueprintBadge = document.getElementById('blueprint-state-badge');
+    const blueprintStateText = document.getElementById('blueprint-state-text');
+    const blueprintCloseBtn = document.getElementById('blueprint-close-btn');
+    const headerBlueprintBtn = document.getElementById('header-blueprint-btn');
+
+    function updateBlueprintUI(isOpen, smoothScroll = false) {
+        if (!blueprintPanel) return;
+
+        if (isOpen) {
+            blueprintPanel.style.display = 'block';
+            blueprintPanel.classList.remove('panel-closing');
+            blueprintPanel.classList.add('panel-opening');
+            
+            if (blueprintSwitch) blueprintSwitch.checked = true;
+            if (blueprintBadge) {
+                blueprintBadge.classList.add('badge-blueprint-active');
+                blueprintBadge.classList.remove('badge-neutral');
+            }
+            if (blueprintStateText) {
+                blueprintStateText.textContent = 'Active / Visible';
+            }
+            if (headerBlueprintBtn) {
+                headerBlueprintBtn.classList.add('active');
+            }
+
+            try {
+                localStorage.setItem('docsec_blueprint_state', 'open');
+            } catch (e) {}
+
+            if (smoothScroll) {
+                setTimeout(() => {
+                    const hero = document.getElementById('blueprint-toggle-hero') || blueprintPanel;
+                    hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        } else {
+            blueprintPanel.classList.remove('panel-opening');
+            blueprintPanel.classList.add('panel-closing');
+            
+            setTimeout(() => {
+                if (!blueprintSwitch || !blueprintSwitch.checked) {
+                    blueprintPanel.style.display = 'none';
+                }
+            }, 250);
+
+            if (blueprintSwitch) blueprintSwitch.checked = false;
+            if (blueprintBadge) {
+                blueprintBadge.classList.remove('badge-blueprint-active');
+                blueprintBadge.classList.add('badge-neutral');
+            }
+            if (blueprintStateText) {
+                blueprintStateText.textContent = 'Collapsed';
+            }
+            if (headerBlueprintBtn) {
+                headerBlueprintBtn.classList.remove('active');
+            }
+
+            try {
+                localStorage.setItem('docsec_blueprint_state', 'closed');
+            } catch (e) {}
+        }
+    }
+
+    if (blueprintSwitch) {
+        blueprintSwitch.addEventListener('change', (e) => {
+            updateBlueprintUI(e.target.checked, e.target.checked);
+        });
+    }
+
+    if (blueprintCloseBtn) {
+        blueprintCloseBtn.addEventListener('click', () => {
+            updateBlueprintUI(false, false);
+            const hero = document.getElementById('blueprint-toggle-hero');
+            if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+
+    if (headerBlueprintBtn) {
+        headerBlueprintBtn.addEventListener('click', () => {
+            if (blueprintSwitch) {
+                const newState = !blueprintSwitch.checked;
+                updateBlueprintUI(newState, true);
+            } else {
+                window.location.href = '/dashboard?blueprint=1#blueprint-toggle-hero';
+            }
+        });
+    }
+
+    // Check URL queries or Hash to auto-open Blueprint
+    const hasBlueprintQuery = urlParams.get('blueprint') === '1' || urlParams.get('show_blueprint') === 'true';
+    const hasBlueprintHash = window.location.hash.startsWith('#blueprint');
+    let savedBlueprintState = 'closed';
+    try {
+        savedBlueprintState = localStorage.getItem('docsec_blueprint_state') || 'closed';
+    } catch (e) {}
+
+    if (hasBlueprintQuery || hasBlueprintHash) {
+        updateBlueprintUI(true, true);
+    } else if (savedBlueprintState === 'open' && blueprintPanel) {
+        updateBlueprintUI(true, false);
+    }
+
+    // Blueprint Internal Navigation Pills
+    const blueprintNavPills = document.querySelectorAll('.blueprint-nav-pill');
+    blueprintNavPills.forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            const targetId = pill.getAttribute('href');
+            if (targetId && targetId.startsWith('#')) {
+                e.preventDefault();
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    blueprintNavPills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    });
+
+    // Flowchart View Switcher Tabs (Diagram / Matrix / Code)
+    const flowchartTabBtns = document.querySelectorAll('.flowchart-tab-btn');
+    flowchartTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const viewTarget = btn.getAttribute('data-view');
+            flowchartTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const views = document.querySelectorAll('.flowchart-view-panel');
+            views.forEach(view => {
+                if (view.id === viewTarget) {
+                    view.style.display = 'block';
+                } else {
+                    view.style.display = 'none';
+                }
+            });
+        });
+    });
 });
 
 // Helper: Filter History Table (real-time search and dropdown filters)

@@ -258,6 +258,16 @@
             </div>
         </div>
 
+        {% if is_simulated_demo %}
+        <div class="p-3 mb-3 border border-info rounded bg-light">
+            <strong class="text-dark d-block mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-flask-vial text-info me-1"></i> Controlled Demonstration Notice:</strong>
+            <p class="small text-secondary mb-0">
+                This document security screening report was generated in a <strong>controlled demonstration mode</strong> using a fictional test fixture labeled <strong>"SAMPLE – NOT VALID"</strong>.
+                This is a <strong>simulated demonstration</strong> of the low-risk evaluation workflow and <strong>does not represent verified document authenticity</strong>.
+            </p>
+        </div>
+        {% endif %}
+
         <!-- 2. "Why was this document classified this way?" -->
         <div class="section-heading">
             <i class="fa-solid fa-circle-question" style="color: var(--accent-primary);"></i>

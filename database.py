@@ -121,12 +121,19 @@ def init_db():
             ("TEST0001", "ID Card", "Sample User", "1998-11-23", "2018-05-10", "2028-05-10", "Flagged"),
             ("DL998877", "Driving Licence", "Sarah Connor", "1988-02-28", "2013-01-01", "2023-01-01", "Valid"),  # Expired
             ("STU202601", "College ID", "David Warner", "2004-06-14", "2023-08-01", "2027-06-30", "Valid"),
-            ("CERT10020", "Certificate", "Emma Watson", "2001-09-19", "2022-12-01", "2032-12-31", "Valid")
+            ("CERT10020", "Certificate", "Emma Watson", "2001-09-19", "2022-12-01", "2032-12-31", "Valid"),
+            ("DEMO98234", "ID Card", "Avery Morgan", "1996-08-24", "2021-03-15", "2031-03-15", "Valid")
         ]
         cursor.executemany('''
             INSERT INTO documents (document_number, document_type, name, date_of_birth, issue_date, expiry_date, status)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', sample_records)
+    else:
+        # Ensure controlled low-risk demo fixture record is present in existing databases
+        cursor.execute('''
+            INSERT OR IGNORE INTO documents (document_number, document_type, name, date_of_birth, issue_date, expiry_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', ("DEMO98234", "ID Card", "Avery Morgan", "1996-08-24", "2021-03-15", "2031-03-15", "Valid"))
 
     conn.commit()
     conn.close()

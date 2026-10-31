@@ -5,6 +5,745 @@
 {% block page_subtitle %}Identity Document Screening and Risk Assessment{% endblock %}
 
 {% block content %}
+<!-- DEDICATED TOGGLE SWITCH BAR: OVERVIEW, OBJECTIVES, PROBLEM STATEMENT & PROCEDURE FLOWCHART -->
+<div class="blueprint-toggle-hero mb-4" id="blueprint-toggle-hero">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="blueprint-hero-icon">
+                <i class="fa-solid fa-diagram-project"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <h5 class="fw-bold mb-0 text-primary">System Blueprint &amp; Methodology Dossier</h5>
+                    <span class="badge-status badge-neutral">
+                        <i class="fa-solid fa-graduation-cap text-primary me-1"></i> B.Tech CSE Project
+                    </span>
+                    <span class="badge-status badge-neutral" id="blueprint-state-badge">
+                        <span class="status-dot"></span> <span id="blueprint-state-text">Collapsed</span>
+                    </span>
+                </div>
+                <p class="text-secondary small mb-0">
+                    Dedicated toggle switch to review Project Overview, Problem Statement, Core Objectives, and the End-to-End Procedure Flowchart.
+                </p>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 ms-md-auto align-self-start align-self-md-center">
+            <div class="text-end d-none d-sm-block">
+                <div class="small fw-bold text-primary">Project Blueprint</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Click switch to reveal</div>
+            </div>
+            <!-- Dedicated Toggle Switch -->
+            <label class="dedicated-toggle-switch" for="blueprint-toggle-switch" title="Toggle System Blueprint, Objectives & Procedure Flowchart">
+                <input type="checkbox" id="blueprint-toggle-switch" aria-label="Toggle Project Blueprint, Objectives & Procedure Flowchart">
+                <span class="dedicated-toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- COLLAPSIBLE DEDICATED BLUEPRINT SECTION -->
+<div id="blueprint-panel" class="blueprint-panel mb-4" style="display: none;">
+    <!-- Sticky Quick-Navigation Subnav Bar -->
+    <div class="blueprint-subnav-bar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="small fw-bold text-primary"><i class="fa-solid fa-compass me-1"></i> Quick Jump:</span>
+            <div class="blueprint-section-nav">
+                <a href="#blueprint-overview" class="blueprint-nav-pill active"><i class="fa-solid fa-circle-info me-1"></i> 1. Overview</a>
+                <a href="#blueprint-problem" class="blueprint-nav-pill"><i class="fa-solid fa-triangle-exclamation me-1"></i> 2. Problem Statement</a>
+                <a href="#blueprint-objectives" class="blueprint-nav-pill"><i class="fa-solid fa-bullseye me-1"></i> 3. Core Objectives</a>
+                <a href="#blueprint-flowchart" class="blueprint-nav-pill"><i class="fa-solid fa-diagram-project me-1"></i> 4. Procedure Flowchart</a>
+            </div>
+        </div>
+        <button type="button" class="btn-subtle py-1 px-3 small" id="blueprint-close-btn" title="Collapse Blueprint Section">
+            <i class="fa-solid fa-chevron-up me-1"></i> Collapse View
+        </button>
+    </div>
+
+    <!-- 1. PROJECT OVERVIEW -->
+    <div class="sec-card mb-4" id="blueprint-overview">
+        <div class="sec-card-header">
+            <div class="sec-card-title">
+                <i class="fa-solid fa-circle-info text-primary"></i>
+                1. System Overview &amp; Architectural Synopsis
+            </div>
+            <span class="badge-status badge-neutral">Cybersecurity Architecture</span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <h5 class="fw-bold text-primary mb-2">AI-Based Fake Identity &amp; Document Screening System</h5>
+                <p class="text-secondary leading-relaxed mb-3">
+                    <strong>DocSec AI</strong> is a modern, lightweight, and explainable document security screening platform engineered to triage identity documents against digital manipulation, fraudulent alterations, expired credentials, and generative synthetic anomalies. The system serves as an automated first-line triage tool for verification officers across financial KYC, academic admissions, employment verification, and public service compliance.
+                </p>
+                <p class="text-secondary leading-relaxed mb-4">
+                    Unlike conventional monolithic deep learning systems that act as opaque "black boxes", DocSec AI operates on a <strong>defense-in-depth, explainable multi-checkpoint pipeline</strong>. By harmonizing deterministic optical rule parsing, cryptographic byte hashing, OpenCV visual forensics, and generative synthetic noise metrics, every flagged anomaly produces an itemized, defensible audit trail.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-subtle h-100">
+                            <h6 class="fw-bold small text-primary mb-2"><i class="fa-solid fa-shield-halved me-1"></i> Core Architectural Pillars</h6>
+                            <ul class="text-secondary small mb-0 ps-3">
+                                <li class="mb-1"><strong>Deterministic Explainability:</strong> No opaque hallucinations; every risk penalty links to concrete visual or syntactic evidence.</li>
+                                <li class="mb-1"><strong>Cryptographic Integrity:</strong> SHA-256 byte hashing detects duplicate submissions and altered re-uploads.</li>
+                                <li class="mb-1"><strong>Dual-Engine Forensics:</strong> Error Level Analysis (ELA) and Fourier noise profiling detect both Photoshop patches and AI diffusion synthesis.</li>
+                                <li><strong>Human-in-the-Loop Triage:</strong> Empowers analysts with a calibrated 0–100 risk score and actionable decision tiers.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded bg-subtle h-100">
+                            <h6 class="fw-bold small text-primary mb-2"><i class="fa-solid fa-layer-group me-1"></i> Supported Credentials &amp; Standards</h6>
+                            <ul class="text-secondary small mb-0 ps-3">
+                                <li class="mb-1"><strong>Aadhaar Card:</strong> 12-digit UIDAI format syntax, QR layout anchors, and UIDAI typography parsing.</li>
+                                <li class="mb-1"><strong>PAN Card:</strong> 10-character alphanumeric syntax (5 letters, 4 digits, 1 letter) &amp; layout structure.</li>
+                                <li class="mb-1"><strong>Driving License:</strong> State code regex, MoRTH schema, and date chronology validation.</li>
+                                <li><strong>Passport &amp; Voter ID:</strong> Passport alpha-prefix syntax &amp; EPIC 10-char alphanumeric schema.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="p-3 rounded bg-subtle h-100 border">
+                    <div class="fw-bold small text-primary mb-2 text-uppercase" style="letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-sliders me-1"></i> Technical Stack &amp; Constraints
+                    </div>
+                    <div class="d-flex flex-column gap-2 small">
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">Framework</span>
+                            <span class="text-primary fw-semibold">Python 3.13 / Flask 3.1</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">Computer Vision</span>
+                            <span class="text-primary fw-semibold">OpenCV 4.10 / PIL / NumPy</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">Optical Extraction</span>
+                            <span class="text-primary fw-semibold">Windows Media OCR / Tesseract</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">PDF Ingestion</span>
+                            <span class="text-primary fw-semibold">PyMuPDF (fitz) / pdf2image</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">Audit Database</span>
+                            <span class="text-primary fw-semibold">SQLite (Thread-Safe Ledger)</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-card border">
+                            <span class="text-secondary">Upload Policy</span>
+                            <span class="text-primary fw-semibold">JPG, PNG, PDF (&le; 5MB Limit)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PROBLEM STATEMENT -->
+    <div class="sec-card mb-4" id="blueprint-problem">
+        <div class="sec-card-header">
+            <div class="sec-card-title">
+                <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+                2. Problem Statement &amp; Threat Landscape
+            </div>
+            <span class="badge-status badge-neutral">Security Threat Analysis</span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-7">
+                <h6 class="fw-bold text-primary mb-2">The Proliferation of Digital Document Forgery</h6>
+                <p class="text-secondary small leading-relaxed mb-3">
+                    In today's digital-first economy, customer onboarding and identity verification are predominantly conducted remotely through uploaded document scans. However, the democratization of powerful digital editing suites (Adobe Photoshop, GIMP, online canvas editors) alongside generative artificial intelligence (diffusion models, LLM document generation) has lowered the technical barrier to committing high-stakes document fraud.
+                </p>
+                <p class="text-secondary small leading-relaxed mb-0">
+                    Fraudsters routinely alter names, forge identification numbers, tamper with birth years to bypass age restrictions, or splice portrait photographs onto legitimate document templates. When presented to automated KYC portals or human reviewers, these fraudulent credentials frequently succeed because standard systems evaluate text in isolation without scrutinizing the underlying image pixels or compression physics.
+                </p>
+            </div>
+
+            <div class="col-md-5">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <h6 class="fw-bold small text-danger mb-2">
+                        <i class="fa-solid fa-circle-xmark me-1"></i> Vulnerabilities in Existing Solutions
+                    </h6>
+                    <div class="d-flex flex-column gap-2 small text-secondary">
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-angle-right text-warning mt-1"></i>
+                            <div><strong>Cognitive Fatigue:</strong> Manual inspectors processing hundreds of scans daily miss micro-splicing and altered fonts.</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-angle-right text-warning mt-1"></i>
+                            <div><strong>Superficial OCR:</strong> Traditional text extractors confirm syntax but are completely blind to pixel recompression and digital pasting.</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-angle-right text-warning mt-1"></i>
+                            <div><strong>Black-Box Deep Learning:</strong> Opaque neural networks cannot produce explainable evidence for regulatory audits or customer appeals.</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <i class="fa-solid fa-angle-right text-warning mt-1"></i>
+                            <div><strong>Non-ID Pollution:</strong> Systems waste computational resources running deep fraud checks on landscape photos, pet pictures, or blank pages.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CORE OBJECTIVES -->
+    <div class="sec-card mb-4" id="blueprint-objectives">
+        <div class="sec-card-header">
+            <div class="sec-card-title">
+                <i class="fa-solid fa-bullseye text-primary"></i>
+                3. Core Project Objectives
+            </div>
+            <span class="badge-status badge-neutral">Engineering Milestones</span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">01</span>
+                        <h6 class="fw-bold small text-primary mb-0">Optical Extraction &amp; Syntax</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Reliably ingest multi-format documents (PDF, JPG, PNG) and extract critical identity fields (Name, ID Number, Dates) with regular expression validation and chronological integrity checks.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">02</span>
+                        <h6 class="fw-bold small text-primary mb-0">OpenCV Tampering Forensics</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Deploy Error Level Analysis (ELA) at 90% recompression alongside bounding contour detection to expose JPEG recompression disparities, pasted patches, and edge gradient anomalies.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">03</span>
+                        <h6 class="fw-bold small text-primary mb-0">Generative AI Screening</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Screen documents for generative synthetic indicators, including Fourier high-frequency noise variance, diffusion synthesis textures, and typographic baseline irregularities.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">04</span>
+                        <h6 class="fw-bold small text-primary mb-0">Cryptographic Integrity</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Calculate deterministic SHA-256 cryptographic fingerprints on ingestion to immediately flag duplicate submissions, byte-level modifications, and session tamper attempts.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">05</span>
+                        <h6 class="fw-bold small text-primary mb-0">Explainable 0–100 Risk Score</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Synthesize 8 independent checkpoint penalties into an explainable 0–100 calibrated risk score categorized into 3 actionable tiers (Likely Genuine, Requires Verification, Suspicious).
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="p-3 rounded bg-subtle border h-100">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flowchart-step-badge">06</span>
+                        <h6 class="fw-bold small text-primary mb-0">Security &amp; Privacy Hardening</h6>
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Enforce PBKDF2-SHA256 password hashing for analysts, parameterized SQLite queries against SQLi, 5MB file upload constraints, and strict HTTPOnly session protections.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. END-TO-END PROCEDURE FLOWCHART -->
+    <div class="sec-card mb-4" id="blueprint-flowchart">
+        <div class="sec-card-header flex-wrap gap-2">
+            <div class="sec-card-title">
+                <i class="fa-solid fa-diagram-project text-primary"></i>
+                4. End-to-End System Procedure Flowchart
+            </div>
+            <!-- View Switcher Tabs -->
+            <div class="d-flex align-items-center gap-1">
+                <button type="button" class="flowchart-tab-btn active" data-view="flowchart-view-diagram">
+                    <i class="fa-solid fa-network-wired me-1"></i> Visual Pipeline
+                </button>
+                <button type="button" class="flowchart-tab-btn" data-view="flowchart-view-matrix">
+                    <i class="fa-solid fa-table me-1"></i> Execution Matrix
+                </button>
+                <button type="button" class="flowchart-tab-btn" data-view="flowchart-view-spec">
+                    <i class="fa-solid fa-code me-1"></i> Architecture Spec
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 1: VISUAL PIPELINE FLOWCHART -->
+        <div class="flowchart-view-panel" id="flowchart-view-diagram">
+            <div class="flowchart-container">
+                <!-- Step 1: Ingestion & SHA-256 Hashing -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">1</span>
+                            <h6 class="fw-bold text-primary mb-0">Document Ingestion &amp; Cryptographic Fingerprinting</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-shield-halved text-success me-1"></i> Cryptographic Invariant</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        User submits document scan (JPG, JPEG, PNG, or PDF &le; 5MB). The system immediately calculates the raw byte <strong>SHA-256 cryptographic digest</strong> and queries the SQLite <code>fingerprints</code> ledger to identify exact byte matches, duplicate submissions, or previous tampering records.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Input:</strong> Document File</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Algorithm:</strong> SHA-256 Hash Digest</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Output:</strong> 64-char Hex Fingerprint</span>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 2: Format Normalization & Preprocessing -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">2</span>
+                            <h6 class="fw-bold text-primary mb-0">Format Normalization &amp; Canvas Preprocessing</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-file-pdf text-danger me-1"></i> PyMuPDF Engine</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        If input is a PDF, PyMuPDF (fitz) extracts embedded digital text streams and rasterizes Page 1 into a high-resolution 300-DPI RGB image. If input is a photo scan, OpenCV applies EXIF orientation normalization, scale standardization, and canvas color space alignment.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Input:</strong> PDF or Raster Image</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Engine:</strong> PyMuPDF + OpenCV</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Output:</strong> Standardized RGB Matrix</span>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 3: Gatekeeper & Image Quality Check -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">3</span>
+                            <h6 class="fw-bold text-primary mb-0">Image Quality Assessment &amp; Optical Pre-Check</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-camera text-primary me-1"></i> Checkpoints 1 &amp; 2</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        Evaluates image sharpness using the <strong>Laplacian Focus Variance</strong> formula (&sigma;<sup>2</sup> &ge; 100 threshold). Assesses histogram brightness (under/over-exposure) and pixel resolution to ensure the image possesses sufficient optical clarity before security triage.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Metric:</strong> cv2.Laplacian() Variance</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Threshold:</strong> Sharpness &gt; 100</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Status:</strong> Passed / Low Quality</span>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 4: Strict Identity-Document Gatekeeper (Decision Node) -->
+                <div class="flowchart-decision-node mb-3">
+                    <div class="flowchart-decision-badge">Gatekeeper Guardrail Checkpoint</div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-solid fa-diamond text-warning fs-5"></i>
+                        <h6 class="fw-bold text-warning mb-0">Decision Gate: Is the Uploaded File a Valid Identity Document?</h6>
+                    </div>
+                    <p class="text-secondary small mb-3">
+                        Evaluates document layout geometry, declared type anchors (Aadhaar, PAN, DL, Passport, Voter ID), textual keyword density, and aspect ratio. If the file is a landscape, pet photo, invoice, or screenshot without ID anchors, the gatekeeper rejects it immediately.
+                    </p>
+
+                    <div class="row g-3">
+                        <!-- Branch Reject -->
+                        <div class="col-md-6">
+                            <div class="flowchart-branch-reject">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="fw-bold text-danger small"><i class="fa-solid fa-ban me-1"></i> FALSE: Not an Identity Document</span>
+                                    <span class="badge bg-danger text-white" style="font-size: 0.68rem;">Early Guardrail Exit</span>
+                                </div>
+                                <p class="text-secondary small mb-2">
+                                    Document flagged as <code>NOT_AN_ID</code>, <code>UNABLE_TO_IDENTIFY</code>, or <code>UNREADABLE</code>. Risk score set to N/A (-1). Saved to audit trail with human review advisory.
+                                </p>
+                                <span class="badge bg-subtle text-danger border border-danger-subtle small">Pipeline Halts &bull; No False Fraud Accusation</span>
+                            </div>
+                        </div>
+
+                        <!-- Branch Pass -->
+                        <div class="col-md-6">
+                            <div class="flowchart-branch-pass">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="fw-bold text-success small"><i class="fa-solid fa-circle-check me-1"></i> TRUE: Valid Identity Document Confirmed</span>
+                                    <span class="badge bg-success text-white" style="font-size: 0.68rem;">Proceed to Forensics</span>
+                                </div>
+                                <p class="text-secondary small mb-2">
+                                    Structural layout conforms to official Indian identity card specifications. Document proceeds directly to multi-engine optical extraction and dual forensic screening.
+                                </p>
+                                <span class="badge bg-subtle text-success border border-success-subtle small">Proceeds to Checkpoint 4 &bull; Deep Screening</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 5: Optical Extraction (OCR) & Field Parsing -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">4</span>
+                            <h6 class="fw-bold text-primary mb-0">Optical Character Extraction &amp; Syntax Verification</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-font text-info me-1"></i> Windows Media / Tesseract OCR</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        Multi-engine OCR parses alphanumeric characters across document coordinates. Regex syntax extractors isolate Document Number, Full Name, Date of Birth, Issue Date, and Expiry Date. Enforces chronological logic (e.g. Issue Date must precede Expiry Date; DOB must indicate age &ge; 18 and &le; 120 years).
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Regex Checks:</strong> Aadhaar (12-digit) &bull; PAN (5L-4D-1L) &bull; DL/Passport</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Chronology:</strong> Issue &lt; Expiry &bull; Valid DOB</span>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 6: Parallel Dual-Engine Forensic Screening -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="flowchart-parallel-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="flowchart-step-badge">5A</span>
+                                <h6 class="fw-bold text-danger mb-0">OpenCV Visual Tampering Forensics</h6>
+                            </div>
+                            <p class="text-secondary small mb-2">
+                                Executes <strong>Error Level Analysis (ELA)</strong> by resaving the image at 90% JPEG compression and computing the absolute pixel disparity matrix:
+                                <br><code class="text-primary small">ELA = |Original - Recompressed_90%| * Scale</code>
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                Detects pasted patch bounding contours, edge gradient discontinuities, and mismatched noise ceilings around sensitive identity text fields.
+                            </p>
+                            <span class="badge bg-subtle text-danger border border-danger-subtle small">Detects: Photoshop, Canva, Splicing, Digital Clones</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="flowchart-parallel-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="flowchart-step-badge">5B</span>
+                                <h6 class="fw-bold text-danger mb-0">Generative AI &amp; Synthetic Indicators</h6>
+                            </div>
+                            <p class="text-secondary small mb-2">
+                                Inspects frequency domain characteristics using 2D Fast Fourier Transforms (FFT). Analyzes high-frequency residual distributions characteristic of diffusion synthesis and generative models.
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                Screens for typography kerning irregularities, baseline character jitter, and unnatural ultra-smooth synthetic background textures.
+                            </p>
+                            <span class="badge bg-subtle text-danger border border-danger-subtle small">Detects: Midjourney, Stable Diffusion, DALL-E, Synthetics</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 7: Local Demo Registry Cross-Check -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">6</span>
+                            <h6 class="fw-bold text-primary mb-0">Local Reference Registry Cross-Check</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-database text-primary me-1"></i> Demo SQLite Ledger</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        Cross-references extracted ID number and holder name against an academic demonstration registry. <em>Academic Boundary:</em> An unverified record incurs only a nominal +5 risk penalty (marking it "Requires Verification"), but <strong>never</strong> marks an ID as fraudulent or suspicious on its own.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Rule:</strong> Match = 0 pts</span>
+                        <span class="badge bg-subtle text-secondary border"><strong>Missing Record:</strong> +5 pts (Unverified, not fraud)</span>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 8: Multi-Factor Risk Calibration Engine -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">7</span>
+                            <h6 class="fw-bold text-primary mb-0">Multi-Factor Risk Calibration Engine (0–100 Scale)</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-scale-balanced text-warning me-1"></i> Explainable Weighting</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        Synthesizes all 8 checkpoints into a deterministic, weighted risk score formula:
+                    </p>
+                    <div class="p-2 rounded bg-subtle border mb-2 code-mono small text-primary">
+                        Score = Quality_Penalty(0-10) + Tampering_ELA(0-40) + AI_Synthetic(0-35) + Syntax_Inconsistency(0-20) + Registry_Missing(0-5)
+                    </div>
+                    <p class="text-secondary small mb-0">
+                        Weights are clamped between 0 and 100 with clear evidence points explaining every added penalty.
+                    </p>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 9: 3-Tier Risk Classification & Outcome -->
+                <div class="flowchart-step-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge">8</span>
+                            <h6 class="fw-bold text-primary mb-0">3-Tier Risk Triage Classification &amp; Action Protocol</h6>
+                        </div>
+                        <span class="badge-status badge-neutral"><i class="fa-solid fa-layer-group text-success me-1"></i> Actionable Triage</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="flowchart-tier-box flowchart-tier-genuine">
+                                <h6 class="fw-bold text-success mb-1"><i class="fa-solid fa-circle-check me-1"></i> LIKELY GENUINE</h6>
+                                <div class="badge-status badge-genuine mb-2">Score: 0 – 25</div>
+                                <p class="text-secondary small mb-0">
+                                    No significant visual manipulation, consistent typography, valid syntax, and clean ELA compression profile.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="flowchart-tier-box flowchart-tier-review">
+                                <h6 class="fw-bold text-warning mb-1"><i class="fa-solid fa-circle-exclamation me-1"></i> REQUIRES VERIFICATION</h6>
+                                <div class="badge-status badge-review mb-2">Score: 26 – 55</div>
+                                <p class="text-secondary small mb-0">
+                                    Unverified registry record, minor blur, missing optional fields, or expired validity date. Manual review recommended.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="flowchart-tier-box flowchart-tier-suspicious">
+                                <h6 class="fw-bold text-danger mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> SUSPICIOUS DOCUMENT</h6>
+                                <div class="badge-status badge-suspicious mb-2">Score: 56 – 100</div>
+                                <p class="text-secondary small mb-0">
+                                    Strong ELA compression disparity, pasted bounding contours, AI diffusion artifacts, or altered critical identifiers.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flowchart-connector-down">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+
+                <!-- Step 10: Dossier & Audit Log -->
+                <div class="flowchart-step-card border-emerald-subtle">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flowchart-step-badge bg-primary text-dark">9</span>
+                            <h6 class="fw-bold text-primary mb-0">Forensic Audit Dossier &amp; PDF Report Generation</h6>
+                        </div>
+                        <span class="badge-status badge-genuine"><i class="fa-solid fa-file-shield text-success me-1"></i> Cryptographic Audit Trail</span>
+                    </div>
+                    <p class="text-secondary small mb-2">
+                        Generates a unique 8-character verification code, commits the audit record with SHA-256 fingerprint into SQLite, renders forensic ELA heatmap artifacts, and enables instant PDF report export for institutional compliance.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 small">
+                        <span class="badge bg-subtle text-secondary border"><strong>Deliverables:</strong> Interactive Dossier &bull; Forensic Heatmaps &bull; PDF Export &bull; Audit Trail</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: EXECUTION MATRIX TABLE -->
+        <div class="flowchart-view-panel" id="flowchart-view-matrix" style="display: none;">
+            <div class="table-responsive">
+                <table class="sec-table">
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Pipeline Stage</th>
+                            <th>Subsystem / Engine</th>
+                            <th>Input Data</th>
+                            <th>Forensic Logic / Criteria</th>
+                            <th>Decision Output</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold text-primary">01</td>
+                            <td>File Ingestion</td>
+                            <td>Python Hashlib</td>
+                            <td>Raw Document Bytes</td>
+                            <td>Calculates SHA-256 hash digest</td>
+                            <td>64-char Hex Fingerprint</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-primary">02</td>
+                            <td>Canvas Normalization</td>
+                            <td>PyMuPDF + OpenCV</td>
+                            <td>PDF or Image File</td>
+                            <td>Rasterizes PDF Page 1 &amp; applies EXIF rotation</td>
+                            <td>Standard RGB Pixel Matrix</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-primary">03</td>
+                            <td>Quality Pre-Check</td>
+                            <td>cv2.Laplacian()</td>
+                            <td>Grayscale Matrix</td>
+                            <td>Variance &sigma;<sup>2</sup> &ge; 100 focus threshold</td>
+                            <td>Image Quality Status (Sharp / Blurry)</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-warning">04</td>
+                            <td>Gatekeeper Guardrail</td>
+                            <td>Doc Type Classifier</td>
+                            <td>Visual anchors + text</td>
+                            <td>Verifies official ID geometry vs generic pictures</td>
+                            <td>Pass to Forensics OR Reject (NOT_AN_ID)</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-primary">05</td>
+                            <td>Optical Extraction</td>
+                            <td>Windows OCR / Tesseract</td>
+                            <td>Normalized Image</td>
+                            <td>Regex patterns + chronology (Issue &lt; Expiry)</td>
+                            <td>Extracted Name, ID#, DOB, Dates</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-danger">06A</td>
+                            <td>Tampering Forensics</td>
+                            <td>OpenCV ELA Engine</td>
+                            <td>Resaved 90% JPEG</td>
+                            <td>Pixel difference matrix highlights spliced patches</td>
+                            <td>ELA Heatmap + Tampering Risk Points</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-danger">06B</td>
+                            <td>AI Synthetic Screening</td>
+                            <td>FFT &amp; Noise Variance</td>
+                            <td>High-pass filtered image</td>
+                            <td>Evaluates diffusion noise &amp; baseline jitter</td>
+                            <td>AI Synthetic Probability &amp; Penalty</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-primary">07</td>
+                            <td>Demo Registry Check</td>
+                            <td>SQLite Parameterized</td>
+                            <td>ID Number + Name</td>
+                            <td>Matches demo reference registry records</td>
+                            <td>Verified (0 pts) / Unverified (+5 pts)</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-primary">08</td>
+                            <td>Risk Calibration</td>
+                            <td>Calibrated Risk Engine</td>
+                            <td>Checkpoint Penalties</td>
+                            <td>Score = &sum; Penalties clamped to 0–100</td>
+                            <td>Calibrated Score &amp; 3-Tier Classification</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-success">09</td>
+                            <td>Dossier &amp; Export</td>
+                            <td>Flask + SQLite + PDF</td>
+                            <td>Complete Audit Result</td>
+                            <td>Persists audit trail and generates forensic dossier</td>
+                            <td>Verification Code + PDF Report</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ARCHITECTURE SPEC / MERMAID -->
+        <div class="flowchart-view-panel" id="flowchart-view-spec" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-secondary">Formal Architecture Flowchart Specification (Mermaid &amp; Sequence Model)</span>
+                <button type="button" class="btn-subtle py-1 px-2 small" onclick="copyToClipboard(document.getElementById('mermaid-flowchart-code').innerText)">
+                    <i class="fa-solid fa-copy me-1"></i> Copy Code
+                </button>
+            </div>
+            <pre class="flowchart-code-container" id="mermaid-flowchart-code">
+flowchart TD
+    %% DocSec AI Complete Screening Procedure
+    Start([User Uploads Document: JPG / PNG / PDF]) --> Hashing[Stage 1: SHA-256 Byte Hash Computation]
+    Hashing --> PDFCheck{Is Document PDF?}
+    PDFCheck -- Yes --> PyMuPDF[Stage 2: PyMuPDF Page Rasterization & Text Extract]
+    PDFCheck -- No --> Preprocess[Stage 2: OpenCV Orientation & Canvas Normalization]
+    PyMuPDF --> Quality[Stage 3: Laplacian Focus Variance & Quality Check]
+    Preprocess --> Quality
+    
+    Quality --> Gatekeeper{Gatekeeper Decision:<br/>Is Upload a Valid Identity Document?}
+    Gatekeeper -- NOT AN ID / Random File --> EarlyExit[Early Guardrail Exit:<br/>Result = 'NOT_AN_ID'<br/>Risk Score = N/A (-1)<br/>Audit Record Logged]
+    
+    Gatekeeper -- Valid Identity Document Confirmed --> OCR[Stage 4: OCR Extraction & Syntax Parsing<br/>Name, ID Number, Dates, Chronology Check]
+    
+    OCR --> ForensicsBranch[Stage 5: Parallel Forensic Analysis]
+    ForensicsBranch --> ELA[Stage 5A: OpenCV Tampering Forensics<br/>Error Level Analysis 90%<br/>Bounding Contour Splice Detection]
+    ForensicsBranch --> AIDetect[Stage 5B: Generative AI Screening<br/>FFT Noise Variance Analysis<br/>Typography Baseline Jitter]
+    
+    ELA --> Registry[Stage 6: Demo Registry Cross-Check<br/>Synthetic Database Verification]
+    AIDetect --> Registry
+    
+    Registry --> RiskEngine[Stage 7: Multi-Factor Risk Calibration Engine<br/>Calibrated 0 to 100 Risk Score]
+    
+    RiskEngine --> TriageDecision{Risk Score Classification}
+    TriageDecision -- 0 to 25 --> Genuine[Likely Genuine<br/>Low Risk - Passed]
+    TriageDecision -- 26 to 55 --> Review[Requires Verification<br/>Medium Risk - Review]
+    TriageDecision -- 56 to 100 --> Suspicious[Suspicious Document<br/>High Risk - Tampered]
+    
+    Genuine --> Dossier[Stage 8: Forensic Audit Dossier Generation<br/>Persist SHA-256 Ledger & SQLite Record<br/>Generate PDF Report]
+    Review --> Dossier
+    Suspicious --> Dossier
+    EarlyExit --> Dossier
+            </pre>
+        </div>
+    </div>
+</div>
+
 <!-- 1. REAL METRICS SUMMARY -->
 <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -125,6 +864,9 @@
                     <div class="d-flex flex-wrap gap-2">
                         <a href="{{ url_for('run_quick_demo', test_name='clean') }}" class="btn-subtle py-1 px-2 small text-success" title="Clean Sample -> Likely Genuine (0-25)">
                             <i class="fa-solid fa-circle-check me-1"></i> Clean Sample (Genuine)
+                        </a>
+                        <a href="{{ url_for('run_quick_demo', test_name='low_risk') }}" class="btn-subtle py-1 px-2 small text-success" title="Controlled Low-Risk Demo -> Likely Genuine – Simulated Test Result (0–25)">
+                            <i class="fa-solid fa-shield-check me-1"></i> Low-Risk Demo (Simulated)
                         </a>
                         <a href="{{ url_for('run_quick_demo', test_name='altered') }}" class="btn-subtle py-1 px-2 small text-danger" title="Altered Document -> Suspicious (56-100)">
                             <i class="fa-solid fa-triangle-exclamation me-1"></i> Altered Doc (Suspicious)

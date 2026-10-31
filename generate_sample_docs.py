@@ -237,16 +237,77 @@ def generate_expired_sample():
     print(f"[CREATED] {path}")
 
 
+def generate_low_risk_sample():
+    """
+    CONTROLLED LOW_RISK DEMONSTRATION FIXTURE:
+    - Fictional test document with invented information.
+    - Clearly labeled 'SAMPLE – NOT VALID'.
+    - Complete, consistent, and registered in demo database.
+    - Produces a predictable LOW_RISK score (0-25) -> 'Likely Genuine – Simulated Test Result'.
+    - Clearly identified as simulated demonstration, not verified document authenticity.
+    """
+    w, h = 800, 480
+    img = Image.new("RGB", (w, h), (248, 250, 252))
+    draw = ImageDraw.Draw(img)
+
+    # Security borders
+    draw.rectangle([(12, 12), (w - 12, h - 12)], outline=(30, 41, 59), width=3)
+    draw.rectangle([(18, 18), (w - 18, h - 18)], outline=(148, 163, 184), width=1)
+
+    # Header bar
+    draw.rectangle([(20, 20), (w - 20, 90)], fill=(15, 23, 42))
+    draw.text((35, 30), "DEMO SYNTHETIC IDENTITY CARD", fill=(255, 255, 255))
+    draw.text((35, 56), "METROPOLITAN CIVIL IDENTITY AUTHORITY // DEMONSTRATION REGISTRY", fill=(56, 189, 248))
+
+    # Prominent "SAMPLE – NOT VALID" Header Badge
+    draw.rectangle([(510, 28), (765, 80)], fill=(185, 28, 28), outline=(239, 68, 68), width=2)
+    draw.text((525, 44), "SAMPLE - NOT VALID", fill=(255, 255, 255))
+
+    # Portrait Placeholder
+    draw_portrait(draw, 45, 115, 160, 210, has_border=True)
+    draw.rectangle([(45, 295), (205, 325)], fill=(15, 23, 42))
+    draw.text((52, 305), "SAMPLE - NOT VALID", fill=(248, 113, 113))
+
+    # Fictional structured fields
+    fields = [
+        "Full Name: Avery Morgan",
+        "Document ID: DEMO98234",
+        "Date of Birth: 1996-08-24",
+        "Issue Date: 2021-03-15",
+        "Expiry Date: 2031-03-15",
+        "Issuing Authority: Metropolitan Civil Identity Authority"
+    ]
+    sy = 115
+    for f in fields:
+        draw.text((240, sy), f, fill=(15, 23, 42))
+        sy += 38
+
+    # Explicit Demo Fixture Advisory Banner
+    draw.rectangle([(240, 350), (765, 395)], fill=(254, 242, 242), outline=(252, 165, 165), width=1)
+    draw.text((255, 358), "SAMPLE - NOT VALID // FICTIONAL TEST FIXTURE", fill=(185, 28, 28))
+    draw.text((255, 376), "Simulated demonstration only. Does not verify document authenticity.", fill=(120, 113, 108))
+
+    # Bottom Security Footer
+    draw.rectangle([(20, h - 52), (w - 20, h - 20)], fill=(226, 232, 240))
+    draw.text((35, h - 40), "VERIFICATION CODE: DEMO98234 // SAMPLE - NOT VALID // SIMULATED FIXTURE", fill=(71, 85, 105))
+
+    path = os.path.join(OUTPUT_DIR, 'DEMO_low_risk_sample.png')
+    img.save(path)
+    print(f"[CREATED] {path}")
+    return path
+
+
 def generate_all_samples():
     print("==================================================")
-    print("GENERATING 5 CONTROLLED SYNTHETIC TEST DOCUMENTS")
+    print("GENERATING CONTROLLED SYNTHETIC TEST DOCUMENTS")
     print("==================================================")
     generate_clean_sample()
     generate_altered_sample()
     generate_ai_synthetic_sample()
     generate_incomplete_sample()
     generate_expired_sample()
-    print("\nAll 5 demo documents successfully generated in:", OUTPUT_DIR)
+    generate_low_risk_sample()
+    print("\nAll demo documents successfully generated in:", OUTPUT_DIR)
 
 
 if __name__ == '__main__':
