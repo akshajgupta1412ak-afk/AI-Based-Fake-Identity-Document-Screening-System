@@ -129,7 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file.size > 5 * 1024 * 1024) {
             alert("File size exceeds 5 MB. Please select a smaller document image.");
             if (fileInput) fileInput.value = '';
-            if (previewContainer) previewContainer.classList.add('d-none');
+            if (previewContainer) {
+                previewContainer.classList.add('d-none');
+                previewContainer.style.display = 'none';
+            }
             return;
         }
 
@@ -149,12 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (e) => {
                 imagePreview.src = e.target.result;
                 imagePreview.style.display = 'block';
-                if (previewContainer) previewContainer.classList.remove('d-none');
+                if (previewContainer) {
+                    previewContainer.classList.remove('d-none');
+                    previewContainer.style.display = 'block';
+                }
             };
             reader.readAsDataURL(file);
         } else if (file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'))) {
             if (imagePreview) {
                 imagePreview.style.display = 'none';
+                imagePreview.src = '';
             }
             let pdfBadge = document.getElementById('pdf-thumbnail-placeholder');
             if (!pdfBadge && previewContainer) {
@@ -166,7 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (pdfBadge) {
                 pdfBadge.style.display = 'block';
             }
-            if (previewContainer) previewContainer.classList.remove('d-none');
+            if (previewContainer) {
+                previewContainer.classList.remove('d-none');
+                previewContainer.style.display = 'block';
+            }
         }
     }
 
@@ -180,12 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove / Replace file action
     if (removeFileBtn) {
         removeFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             if (fileInput) fileInput.value = '';
-            if (previewContainer) previewContainer.classList.add('d-none');
-            if (imagePreview) imagePreview.src = '#';
+            if (previewContainer) {
+                previewContainer.classList.add('d-none');
+                previewContainer.style.display = 'none';
+            }
+            if (imagePreview) {
+                imagePreview.src = '';
+                imagePreview.style.display = 'none';
+            }
             const pdfBadge = document.getElementById('pdf-thumbnail-placeholder');
             if (pdfBadge) pdfBadge.style.display = 'none';
+            if (previewFilename) previewFilename.textContent = 'filename.png';
+            if (previewFilesize) previewFilesize.textContent = '0 KB';
         });
     }
 
@@ -193,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (uploadForm && submitBtn) {
         uploadForm.addEventListener('submit', () => {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Screening Document... Running Checkpoints';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Screening Document... Running Checkpoints';
         });
     }
 
