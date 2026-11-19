@@ -6,6 +6,10 @@
       "destination": "/static/$1"
     },
     {
+      "source": "/",
+      "destination": "/api/index.py?__url=/"
+    },
+    {
       "source": "/(.*)",
       "destination": "/api/index.py?__url=/$1"
     }

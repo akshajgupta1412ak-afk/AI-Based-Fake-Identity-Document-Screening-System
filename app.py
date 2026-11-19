@@ -306,6 +306,10 @@ def debug_path():
     }
 
 
+@app.route('/index')
+@app.route('/api')
+@app.route('/api/index')
+@app.route('/api/index.py')
 @app.route('/')
 def index():
     return render_template('landing.html')
@@ -1219,13 +1223,22 @@ def run_quick_demo(test_name):
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('index'))
 
 
 @app.errorhandler(413)
 def file_too_large(error):
     flash("Security Alert: Uploaded file exceeds the 5MB size threshold.", "danger")
     return redirect(url_for('upload'))
+
+
+@app.after_request
+def add_cache_control_headers(response):
+    if request.path in ['/', '/index', '/api', '/api/index', '/api/index.py']:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 
 # ====================================================================

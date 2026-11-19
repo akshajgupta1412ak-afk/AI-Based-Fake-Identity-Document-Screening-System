@@ -33,10 +33,18 @@ try:
                     real_path = parsed['__url'][0]
                     if not real_path.startswith('/'):
                         real_path = '/' + real_path
+                    while '//' in real_path:
+                        real_path = real_path.replace('//', '/')
                     environ['PATH_INFO'] = real_path
                     # Clean up __url so application query parameters stay clean
                     clean_params = [p for p in query_string.split('&') if not p.startswith('__url=')]
                     environ['QUERY_STRING'] = '&'.join(clean_params)
+                else:
+                    environ['PATH_INFO'] = '/'
+            else:
+                path_info = environ.get('PATH_INFO', '')
+                if path_info in ['/api/index.py', '/api/index', '/api', '']:
+                    environ['PATH_INFO'] = '/'
             return self.wsgi_app(environ, start_response)
 
     app.wsgi_app = VercelQueryPathMiddleware(app.wsgi_app)
