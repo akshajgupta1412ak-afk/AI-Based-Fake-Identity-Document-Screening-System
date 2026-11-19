@@ -190,6 +190,7 @@ def validate_identity_document(ocr_data, image_path, declared_type=None, quality
     is_card_aspect = False
     is_portrait_aspect = False
     has_card_geometry = False
+    has_rectangular_contour = False
     aspect = 1.0
 
     if detect_card_geometry and image_path and os.path.exists(image_path):
@@ -197,6 +198,7 @@ def validate_identity_document(ocr_data, image_path, declared_type=None, quality
         is_card_aspect = geom.get('is_card_aspect', False)
         is_portrait_aspect = geom.get('is_portrait_aspect', False)
         has_card_geometry = geom.get('is_plausible_card', False)
+        has_rectangular_contour = geom.get('has_rectangular_contour', False)
         aspect = geom.get('aspect_ratio', 1.0)
     elif image_path and os.path.exists(image_path):
         try:
@@ -323,7 +325,7 @@ def validate_identity_document(ocr_data, image_path, declared_type=None, quality
     # Also check if OCR detected partial/faint ID traces that could not be fully resolved due to OCR degradation
     has_partial_id_trace = bool(category_scores or len(structured_field_matches) >= 1 or parsed_fields >= 1)
 
-    if is_quality_insufficient or (has_card_geometry and has_partial_id_trace and total_chars < 30):
+    if is_quality_insufficient or (has_card_geometry and has_partial_id_trace and total_chars < 30) or (has_rectangular_contour and is_ocr_empty):
         issues_list = list(quality_issues) if quality_issues else []
         if is_blurry and not any('blur' in iss.lower() for iss in issues_list):
             issues_list.append(f"Optical blur detected (sharpness index: {round(sharpness, 1)}). Text may be unreadable.")

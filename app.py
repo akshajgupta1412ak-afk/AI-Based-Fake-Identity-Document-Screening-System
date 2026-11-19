@@ -308,7 +308,7 @@ def debug_path():
 
 @app.route('/')
 def index():
-    return redirect(url_for('dashboard'))
+    return render_template('landing.html')
 
 
 @app.route('/dashboard')
@@ -667,6 +667,12 @@ def result(code):
 
     evidence = raw_meta.get('evidence', {})
     missing_or_uncertain = raw_meta.get('missing_or_uncertain', [])
+    if not missing_or_uncertain and 26 <= score <= 55:
+        missing_fields_list = [f"{f['field']}: Field unverified or unparsed in document scan" for f in extracted_fields if not f.get('is_valid')]
+        if missing_fields_list:
+            missing_or_uncertain = missing_fields_list
+        elif attention_indicators:
+            missing_or_uncertain = attention_indicators
     suggested_action = raw_meta.get('suggested_action')
     if not suggested_action:
         if score <= 25:

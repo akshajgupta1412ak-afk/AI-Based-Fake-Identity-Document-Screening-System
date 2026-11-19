@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocSec AI – Document Security &amp; Authenticity Screening</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-deep: #08090d;
+            --bg-card: #0f1117;
+            --gold-primary: #E8B968;
+            --gold-hover: #f3cb85;
+            --gold-glow: rgba(232, 185, 104, 0.42);
+            --gold-subtle: rgba(232, 185, 104, 0.12);
+            --gold-border: rgba(232, 185, 104, 0.28);
+            --text-pure: #ffffff;
+            --text-soft: #e2e1dc;
+            --text-muted: #9ba0a8;
+            --text-dim: #606674;
+            --font-sans: 'Instrument Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            background-color: var(--bg-deep);
+            color: var(--text-pure);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-deep);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* -------------------------------------------------------------
+           Ambient Cinematic Artwork (Golden Arcs, Mesh, Glow)
+           ------------------------------------------------------------- */
+        .ambient-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .ambient-canvas svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* -------------------------------------------------------------
+           Navigation Bar (Direct Reference Match)
+           ------------------------------------------------------------- */
+        .landing-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 56px;
+            background: rgba(8, 9, 13, 0.72);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(232, 185, 104, 0.14);
+            transition: all 0.25s ease;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 17.5px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-shield {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            color: var(--gold-primary);
+            transition: transform 0.2s ease;
+        }
+
+        .brand-link:hover .brand-shield {
+            transform: scale(1.06);
+        }
+
+        .brand-shield svg {
+            width: 26px;
+            height: 26px;
+            display: block;
+        }
+
+        .nav-center-menu {
+            display: flex;
+            align-items: center;
+            gap: 34px;
+            list-style: none;
+        }
+
+        .nav-center-menu a {
+            color: var(--text-soft);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            position: relative;
+            padding: 8px 4px;
+        }
+
+        .nav-center-menu a:hover {
+            color: var(--gold-primary);
+        }
+
+        .nav-center-menu a.active {
+            color: #ffffff;
+        }
+
+        .nav-center-menu a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 4px;
+            right: 4px;
+            height: 2px;
+            background: var(--gold-primary);
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(232, 185, 104, 0.6);
+        }
+
+        .nav-right-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Reference top-right button: ↗ Get Started */
+        .nav-btn-started {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            background: var(--gold-primary);
+            color: #15110a;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            letter-spacing: 0.01em;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 16px rgba(232, 185, 104, 0.25);
+            border: 1px solid rgba(232, 185, 104, 0.8);
+        }
+
+        .nav-btn-started svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.2;
+        }
+
+        .nav-btn-started:hover {
+            transform: translateY(-1px) scale(1.02);
+            background: var(--gold-hover);
+            box-shadow: 0 0 24px rgba(232, 185, 104, 0.45);
+            color: #0d0a06;
+        }
+
+        /* -------------------------------------------------------------
+           Hero Section (Authoritative Reference Match)
+           ------------------------------------------------------------- */
+        .hero-viewport {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 130px 24px 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-content {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Small Outlined Pill Badge */
+        .hero-chip-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 20px;
+            border-radius: 9999px;
+            background: rgba(232, 185, 104, 0.05);
+            border: 1px solid var(--gold-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #e5e2da;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+            animation: fadeInDown 0.8s ease backwards;
+        }
+
+        .hero-chip-badge svg {
+            width: 14px;
+            height: 14px;
+            color: var(--gold-primary);
+            flex-shrink: 0;
+        }
+
+        /* Large Serif Heading: "Know Which Documents to Trust." */
+        .hero-main-title {
+            font-family: var(--font-serif);
+            font-size: clamp(48px, 6.2vw, 84px);
+            font-weight: 400;
+            line-height: 1.08;
+            letter-spacing: -0.015em;
+            color: #ffffff;
+            margin-bottom: 24px;
+            max-width: 840px;
+            text-wrap: balance;
+            animation: fadeInUp 0.9s ease 0.1s backwards;
+        }
+
+        .hero-main-title .gold-accent {
+            color: var(--gold-primary);
+            text-shadow: 0 0 35px rgba(232, 185, 104, 0.28);
+        }
+
+        /* Description */
+        .hero-description {
+            font-size: clamp(15px, 1.35vw, 16.5px);
+            line-height: 1.68;
+            color: var(--text-muted);
+            max-width: 630px;
+            margin: 0 auto 36px;
+            font-weight: 400;
+            animation: fadeInUp 0.9s ease 0.2s backwards;
+        }
+
+        /* Main Center CTA Button: Get Started → */
+        .hero-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 13px 38px;
+            border-radius: 9999px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+            background: linear-gradient(135deg, #fce0aa 0%, #e8b968 50%, #d89f46 100%);
+            color: #15110a;
+            border: 1px solid rgba(255, 230, 180, 0.5);
+            box-shadow: 0 0 28px rgba(232, 185, 104, 0.38), 0 4px 14px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            animation: fadeInUp 0.9s ease 0.3s backwards;
+        }
+
+        .hero-cta-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2.2;
+            transition: transform 0.2s ease;
+        }
+
+        .hero-cta-btn:hover {
+            transform: translateY(-2px) scale(1.025);
+            background: linear-gradient(135deg, #ffffff 0%, #f7d292 45%, #e0a74d 100%);
+            box-shadow: 0 0 42px rgba(232, 185, 104, 0.6), 0 6px 20px rgba(0, 0, 0, 0.6);
+            color: #0d0a06;
+        }
+
+        .hero-cta-btn:hover svg {
+            transform: translateX(3px);
+        }
+
+        .hero-cta-btn:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        /* -------------------------------------------------------------
+           Below The Fold Sections (Features, How it works, About)
+           ------------------------------------------------------------- */
+        .landing-section {
+            position: relative;
+            z-index: 10;
+            padding: 100px 48px;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-tag {
+            font-size: 11.5px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: clamp(32px, 3.8vw, 48px);
+            font-weight: 400;
+            color: #ffffff;
+            margin-bottom: 14px;
+            letter-spacing: -0.015em;
+        }
+
+        .section-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 580px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: rgba(15, 17, 23, 0.65);
+            border: 1px solid rgba(232, 185, 104, 0.12);
+            border-radius: 12px;
+            padding: 32px 28px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        .feature-card:hover {
+            border-color: rgba(232, 185, 104, 0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(232, 185, 104, 0.1);
+        }
+
+        .feature-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(232, 185, 104, 0.08);
+            border: 1px solid rgba(232, 185, 104, 0.25);
+            color: var(--gold-primary);
+            display: grid;
+            place-items: center;
+            margin-bottom: 22px;
+        }
+
+        .feature-icon-wrapper svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .feature-card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* How it works steps */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .step-item {
+            background: rgba(15, 17, 23, 0.5);
+            border: 1px solid rgba(232, 185, 104, 0.1);
+            border-radius: 12px;
+            padding: 26px 22px;
+            position: relative;
+        }
+
+        .step-num {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--gold-primary);
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .step-item h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .step-item p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* About / Blueprint Summary Banner */
+        .blueprint-banner {
+            background: linear-gradient(135deg, rgba(20, 22, 30, 0.8) 0%, rgba(12, 14, 20, 0.8) 100%);
+            border: 1px solid rgba(232, 185, 104, 0.16);
+            border-radius: 16px;
+            padding: 48px;
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .blueprint-banner h3 {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 400;
+            color: #ffffff;
+            margin-bottom: 14px;
+        }
+
+        .blueprint-banner p {
+            font-size: 14.5px;
+            color: var(--text-muted);
+            line-height: 1.65;
+            margin-bottom: 24px;
+        }
+
+        /* Landing Footer */
+        .landing-footer {
+            border-top: 1px solid rgba(232, 185, 104, 0.1);
+            padding: 36px 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-dim);
+            font-size: 13px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .landing-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .landing-footer a:hover {
+            color: var(--gold-primary);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 960px) {
+            .landing-header {
+                padding: 16px 24px;
+            }
+            .nav-center-menu {
+                display: none;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .steps-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .blueprint-banner {
+                grid-template-columns: 1fr;
+                padding: 30px;
+            }
+            .landing-footer {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+                padding: 30px 24px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-main-title {
+                font-size: 44px;
+            }
+            .hero-cta-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient SVG Artwork: Golden Curved Light Trails, Soft Intersections & Fine Mesh -->
+    <div class="ambient-canvas">
+        <svg viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <!-- Upper-Right Main Arc Gradient -->
+                <linearGradient id="gold-arc-ur1" x1="60%" y1="0%" x2="100%" y2="50%">
+                    <stop offset="0%" stop-color="#E8B968" stop-opacity="0" />
+                    <stop offset="20%" stop-color="#E8B968" stop-opacity="0.3" />
+                    <stop offset="45%" stop-color="#fae5b8" stop-opacity="0.95" />
+                    <stop offset="55%" stop-color="#ffffff" stop-opacity="1" />
+                    <stop offset="70%" stop-color="#E8B968" stop-opacity="0.75" />
+                    <stop offset="90%" stop-color="#d49a3c" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#E8B968" stop-opacity="0" />
+                </linearGradient>
+
+                <!-- Upper-Right Crossing Beam Gradient -->
+                <linearGradient id="gold-arc-ur2" x1="100%" y1="10%" x2="65%" y2="55%">
+                    <stop offset="0%" stop-color="#E8B968" stop-opacity="0" />
+                    <stop offset="25%" stop-color="#E8B968" stop-opacity="0.3" />
+                    <stop offset="48%" stop-color="#fff2d4" stop-opacity="0.95" />
+                    <stop offset="55%" stop-color="#ffffff" stop-opacity="1" />
+                    <stop offset="68%" stop-color="#E8B968" stop-opacity="0.6" />
+                    <stop offset="100%" stop-color="#E8B968" stop-opacity="0" />
+                </linearGradient>
+
+                <!-- Lower-Left Main Arc Gradient -->
+                <linearGradient id="gold-arc-ll1" x1="35%" y1="100%" x2="0%" y2="45%">
+                    <stop offset="0%" stop-color="#E8B968" stop-opacity="0" />
+                    <stop offset="22%" stop-color="#E8B968" stop-opacity="0.35" />
+                    <stop offset="42%" stop-color="#fae5b8" stop-opacity="0.95" />
+                    <stop offset="50%" stop-color="#ffffff" stop-opacity="1" />
+                    <stop offset="65%" stop-color="#E8B968" stop-opacity="0.75" />
+                    <stop offset="85%" stop-color="#d49a3c" stop-opacity="0.3" />
+                    <stop offset="100%" stop-color="#E8B968" stop-opacity="0" />
+                </linearGradient>
+
+                <!-- Lower-Left Crossing Beam Gradient -->
+                <linearGradient id="gold-arc-ll2" x1="5%" y1="95%" x2="35%" y2="55%">
+                    <stop offset="0%" stop-color="#E8B968" stop-opacity="0" />
+                    <stop offset="30%" stop-color="#E8B968" stop-opacity="0.4" />
+                    <stop offset="52%" stop-color="#fff2d4" stop-opacity="0.9" />
+                    <stop offset="60%" stop-color="#ffffff" stop-opacity="1" />
+                    <stop offset="75%" stop-color="#E8B968" stop-opacity="0.5" />
+                    <stop offset="100%" stop-color="#E8B968" stop-opacity="0" />
+                </linearGradient>
+
+                <!-- Soft Golden Glow Filters -->
+                <filter id="gold-glow-intense" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3" result="b1" />
+                    <feGaussianBlur stdDeviation="12" result="b2" />
+                    <feGaussianBlur stdDeviation="28" result="b3" />
+                    <feMerge>
+                        <feMergeNode in="b3" />
+                        <feMergeNode in="b2" />
+                        <feMergeNode in="b1" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+
+                <filter id="gold-blur-soft" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="18" />
+                </filter>
+                <filter id="gold-blur-medium" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="8" />
+                </filter>
+            </defs>
+
+            <!-- Subtle Abstract Mesh/Netting Textures Along Edges -->
+            <!-- Upper Right Triangular Polygon Mesh Lines -->
+            <g stroke="#E8B968" stroke-opacity="0.08" stroke-width="0.8">
+                <line x1="1240" y1="30" x2="1320" y2="90" />
+                <line x1="1320" y1="90" x2="1410" y2="60" />
+                <line x1="1320" y1="90" x2="1290" y2="180" />
+                <line x1="1410" y1="60" x2="1440" y2="130" />
+                <line x1="1290" y1="180" x2="1390" y2="200" />
+                <line x1="1390" y1="200" x2="1440" y2="180" />
+                <line x1="1290" y1="180" x2="1230" y2="260" />
+                <line x1="1230" y1="260" x2="1340" y2="290" />
+                <line x1="1340" y1="290" x2="1440" y2="270" />
+            </g>
+
+            <!-- Lower Left Abstract Netting Lines -->
+            <g stroke="#E8B968" stroke-opacity="0.07" stroke-width="0.8">
+                <line x1="30" y1="620" x2="110" y2="670" />
+                <line x1="110" y1="670" x2="80" y2="760" />
+                <line x1="110" y1="670" x2="200" y2="710" />
+                <line x1="80" y1="760" x2="160" y2="810" />
+                <line x1="200" y1="710" x2="160" y2="810" />
+                <line x1="200" y1="710" x2="280" y2="770" />
+                <line x1="160" y1="810" x2="240" y2="870" />
+                <line x1="280" y1="770" x2="240" y2="870" />
+            </g>
+
+            <!-- Lower-Left Concentric Dotted Golden Ring -->
+            <circle cx="340" cy="740" r="460" stroke="#E8B968" stroke-opacity="0.22" stroke-width="1.2" stroke-dasharray="2 7" fill="none" />
+            <circle cx="340" cy="740" r="620" stroke="#E8B968" stroke-opacity="0.1" stroke-width="0.8" fill="none" />
+
+            <!-- UPPER-RIGHT GOLDEN LIGHT TRAILS -->
+            <!-- Arc 1: Enters from top edge and sweeps downward right -->
+            <path d="M 940,-40 C 1040,110 1180,180 1480,360" stroke="url(#gold-arc-ur1)" stroke-width="2.6" filter="url(#gold-glow-intense)" />
+            <!-- Arc 2: Crossing beam from top-right corner heading inward -->
+            <path d="M 1480,60 C 1320,130 1180,240 1020,480" stroke="url(#gold-arc-ur2)" stroke-width="2.2" filter="url(#gold-glow-intense)" />
+
+            <!-- Upper-Right Intersection Glow Bloom (around x: 1210, y: 220) -->
+            <g transform="translate(1210, 222)">
+                <circle cx="0" cy="0" r="48" fill="rgba(232, 185, 104, 0.22)" filter="url(#gold-blur-soft)" />
+                <circle cx="0" cy="0" r="20" fill="rgba(250, 229, 184, 0.45)" filter="url(#gold-blur-medium)" />
+                <circle cx="0" cy="0" r="3" fill="#ffffff" />
+            </g>
+
+            <!-- LOWER-LEFT GOLDEN LIGHT TRAILS -->
+            <!-- Arc 3: Sweeps from bottom edge rising up-left toward left edge -->
+            <path d="M 470,950 C 370,780 230,680 -50,510" stroke="url(#gold-arc-ll1)" stroke-width="2.6" filter="url(#gold-glow-intense)" />
+            <!-- Arc 4: Crossing beam shooting up-right from lower left -->
+            <path d="M -40,860 C 110,770 230,650 480,480" stroke="url(#gold-arc-ll2)" stroke-width="2.2" filter="url(#gold-glow-intense)" />
+
+            <!-- Lower-Left Intersection Glow Bloom (around x: 236, y: 622) -->
+            <g transform="translate(236, 622)">
+                <circle cx="0" cy="0" r="48" fill="rgba(232, 185, 104, 0.22)" filter="url(#gold-blur-soft)" />
+                <circle cx="0" cy="0" r="20" fill="rgba(250, 229, 184, 0.45)" filter="url(#gold-blur-medium)" />
+                <circle cx="0" cy="0" r="3" fill="#ffffff" />
+            </g>
+        </svg>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="landing-header">
+        <a href="/" class="brand-link">
+            <div class="brand-shield">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2.5L20 5.5V11.5C20 16.2 16.6 20.2 12 21.5C7.4 20.2 4 16.2 4 11.5V5.5L12 2.5Z" stroke="#E8B968" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M8.5 11.5L11 14L15.5 9" stroke="#E8B968" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <span>DocSec AI</span>
+        </a>
+
+        <nav class="nav-center-menu">
+            <a href="/" class="active">Home</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#about">About</a>
+        </nav>
+
+        <div class="nav-right-actions">
+            <a href="{{ url_for('dashboard') }}" class="nav-btn-started">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                    <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+                <span>Get Started</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- First Screen / Hero Section -->
+    <main>
+        <section class="hero-viewport" id="hero">
+            <div class="hero-content">
+                <!-- Small Outlined Badge -->
+                <div class="hero-chip-badge">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2.5L20 5.5V11.5C20 16.2 16.6 20.2 12 21.5C7.4 20.2 4 16.2 4 11.5V5.5L12 2.5Z" stroke="#E8B968" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M8.5 11.5L11 14L15.5 9" stroke="#E8B968" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>DOCUMENT SECURITY &amp; AUTHENTICITY</span>
+                </div>
+
+                <!-- Main Heading (Reference: "Know Which Documents" in White, "Trust." in Gold) -->
+                <h1 class="hero-main-title">
+                    Know Which Documents<br>to <span class="gold-accent">Trust.</span>
+                </h1>
+
+                <!-- Description -->
+                <p class="hero-description">
+                    Screen identity documents with intelligent analysis, OCR, image forensics and risk assessment. Get clear results and insights through a simple document verification workflow.
+                </p>
+
+                <!-- Primary Action Button: Get Started → -->
+                <a href="{{ url_for('dashboard') }}" class="hero-cta-btn">
+                    <span>Get Started</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- Section: Features -->
+        <section class="landing-section" id="features">
+            <div class="section-header">
+                <span class="section-tag">Core Capabilities</span>
+                <h2 class="section-title">Engineered for Explainable Triage</h2>
+                <p class="section-desc">Deterministic optical extraction, pixel-level tampering heuristics, and calibrated risk tiers designed for KYC officers and verification analysts.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <h3>Optical Field Parsing</h3>
+                    <p>Multi-engine OCR with Aadhaar, PAN, Passport and Driving Licence regex validation. Cross-checks chronological date consistency.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <h3>OpenCV Visual Forensics</h3>
+                    <p>Dual-stage Error Level Analysis (ELA) at 90% recompression plus contour edge detection to detect spliced text and pasted photo patches.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    </div>
+                    <h3>AI &amp; Synthetic Indicators</h3>
+                    <p>Fourier noise variance profiling and typography alignment baselines to flag diffusion models, face-swaps, and generated scans.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: How It Works -->
+        <section class="landing-section" id="how-it-works">
+            <div class="section-header">
+                <span class="section-tag">Inspection Pipeline</span>
+                <h2 class="section-title">How A Document Is Checked</h2>
+                <p class="section-desc">Every uploaded file moves through eight defense-in-depth checkpoints to produce an auditable score.</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-num">01</div>
+                    <h4>Ingest &amp; Hash</h4>
+                    <p>Cryptographic SHA-256 byte fingerprinting logs submissions and identifies altered re-uploads.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">02</div>
+                    <h4>Quality Pre-Gate</h4>
+                    <p>Resolution, focus sharpness and exposure checks ensure the document is clear enough for OCR.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">03</div>
+                    <h4>Dual Forensics</h4>
+                    <p>OpenCV ELA tampering heuristics and generative synthetic noise metrics run in parallel.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">04</div>
+                    <h4>Risk Calibration</h4>
+                    <p>A calibrated 0–100 score categorizes the document into Likely Genuine, Verification, or Suspicious.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: About / Blueprint -->
+        <section class="landing-section" id="about">
+            <div class="blueprint-banner">
+                <div>
+                    <h3>Engineered for Academic &amp; Industry Rigor</h3>
+                    <p>DocSec AI is developed as an explainable triage framework for KYC officers, academic admissions, and public services. Every risk penalty maps to concrete pixel or syntactic evidence, providing human reviewers with complete audit defensibility.</p>
+                    <a href="{{ url_for('dashboard') }}" class="nav-btn-started" style="display: inline-flex; padding: 10px 22px;">
+                        <span>Enter Screening Console</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                </div>
+                <div style="border-left: 1px solid rgba(232, 185, 104, 0.16); padding-left: 32px;">
+                    <div style="font-size: 13px; color: var(--text-muted); line-height: 2;">
+                        <div><strong style="color: #ffffff;">Framework:</strong> Python 3.13 / Flask 3.1</div>
+                        <div><strong style="color: #ffffff;">Forensics:</strong> OpenCV 4.10 / PyMuPDF</div>
+                        <div><strong style="color: #ffffff;">Security:</strong> SHA-256 / PBKDF2</div>
+                        <div><strong style="color: #ffffff;">Persistence:</strong> SQLite Database</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div>
+            © MDC Projects · CSE Cyber Security · Batch 2025 | All Rights Reserved.
+        </div>
+        <div style="display: flex; gap: 24px;">
+            <a href="/">Home</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('upload') }}">New Screening</a>
+            <a href="{{ url_for('help_page') }}">Documentation</a>
+        </div>
+    </footer>
+
+</body>
+</html>
